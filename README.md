@@ -1,4 +1,4 @@
-# Remotion video
+# Quick Stitch - Image to Video Slideshow Creator
 
 <p align="center">
   <a href="https://github.com/remotion-dev/logo">
@@ -9,9 +9,18 @@
   </a>
 </p>
 
-Welcome to your Remotion project!
+Create beautiful video slideshows from your images with drag & drop simplicity! Built with React, Remotion, Tailwind CSS, and shadcn/ui.
 
-## Commands
+## ✨ Features
+
+- **Drag & Drop Interface**: Simply drag images to upload and reorder them
+- **Real-time Preview**: See your slideshow as you build it
+- **Customizable FPS**: Adjust frame rate from 1-120 FPS to control video speed
+- **H.264 Export**: Professional video output ready for sharing
+- **Modern UI**: Beautiful interface built with shadcn/ui and Tailwind CSS
+- **Remotion Powered**: Leverages Remotion for high-quality video rendering
+
+## 🚀 Quick Start
 
 **Install Dependencies**
 
@@ -19,36 +28,91 @@ Welcome to your Remotion project!
 pnpm i
 ```
 
-**Start Preview**
+**Start the Web App**
+
+```console
+pnpm run web
+```
+
+**Start Remotion Studio** (for advanced preview and rendering)
 
 ```console
 pnpm run dev
 ```
 
-**Render video**
+## 📖 How to Use
 
-```console
-pnpm exec remotion render
+1. **Add Images**: Drag and drop images or click to select them (supports JPEG, PNG, GIF, WebP)
+2. **Reorder**: Drag the grip handle to rearrange your image sequence
+3. **Adjust Settings**: Use the FPS slider to control video speed (higher FPS = faster transitions)
+4. **Preview**: See a basic preview in the web app or use Remotion Studio for full preview
+5. **Export**: Click "Export to H.264" to render your final video
+
+## 🎬 Available Scripts
+
+- `pnpm run web` - Start the web interface (port 3001)
+- `pnpm run dev` - Start Remotion Studio for advanced editing
+- `pnpm run render` - Render video from command line
+- `pnpm run build` - Build the Remotion bundle
+- `pnpm run upgrade` - Upgrade Remotion to latest version
+
+## 🛠 Tech Stack
+
+- **React 19** - Modern React with latest features
+- **Remotion** - Programmatic video creation
+- **Tailwind CSS v4** - Utility-first styling
+- **shadcn/ui** - Beautiful, accessible components
+- **Zustand** - Lightweight state management
+- **@dnd-kit** - Smooth drag and drop interactions
+- **react-dropzone** - File upload handling
+- **Vite** - Fast development server
+
+## 💡 Tips
+
+- **Image Quality**: Use high-resolution images for best video output
+- **Performance**: The app handles dozens of images smoothly
+- **Formats**: Supports all major image formats (JPEG, PNG, GIF, WebP)
+- **Duration**: Each image displays for `1/FPS` seconds (e.g., 30 FPS = ~0.033s per image)
+
+## 📁 Project Structure
+
+```
+src/
+├── components/          # React components
+│   ├── ui/             # shadcn/ui components
+│   ├── ImageUpload.tsx # Drag & drop upload
+│   ├── ImageList.tsx   # Sortable image list
+│   └── Controls.tsx    # FPS and export controls
+├── store/              # Zustand state management
+├── lib/                # Utilities and helpers
+├── Composition.tsx     # Remotion video composition
+├── App.tsx            # Main web application
+└── Root.tsx           # Remotion root configuration
 ```
 
-**Upgrade Remotion**
+## 🎥 Remotion Integration
 
-```console
-pnpm exec remotion upgrade
-```
+This project uses Remotion for professional video rendering. The `Slideshow` composition automatically:
 
-## Docs
+- Calculates frame timing based on your FPS setting
+- Handles image transitions and display duration
+- Adds professional overlays (image counter)
+- Outputs broadcast-quality H.264 video
 
-Get started with Remotion by reading the [fundamentals page](https://www.remotion.dev/docs/the-fundamentals).
+## 🤝 Contributing
 
-## Help
+This is a template project! Feel free to:
 
-We provide help on our [Discord server](https://discord.gg/6VzzNDwUwV).
+- Add transitions between images
+- Implement custom timing per image
+- Add text overlays and captions
+- Create different slideshow styles
+- Add audio support
 
-## Issues
+## 📄 License
 
-Found an issue with Remotion? [File an issue here](https://github.com/remotion-dev/remotion/issues/new).
+Note that for some entities a company license is needed for Remotion. [Read the terms here](https://github.com/remotion-dev/remotion/blob/main/LICENSE.md).
 
-## License
+---
 
-Note that for some entities a company license is needed. [Read the terms here](https://github.com/remotion-dev/remotion/blob/main/LICENSE.md).
+**Made with ❤️ using Remotion, React, and modern web technologies**
