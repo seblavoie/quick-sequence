@@ -7,9 +7,17 @@ export interface ImageItem {
   name: string;
 }
 
+export type QualityPreset = "low" | "medium" | "high" | "ultra";
+
+export interface ExportSettings {
+  quality: QualityPreset;
+  scale: number; // Scale percentage (0.25 = 25%, 1.0 = 100%)
+}
+
 interface ImageStore {
   images: ImageItem[];
-  fps: number;
+  imageDuration: number; // Duration in seconds each image shows
+  exportSettings: ExportSettings;
   isExporting: boolean;
   exportProgress: number;
   exportSuccess: {
@@ -23,7 +31,8 @@ interface ImageStore {
   addImages: (files: File[]) => void;
   removeImage: (id: string) => void;
   reorderImages: (oldIndex: number, newIndex: number) => void;
-  setFps: (fps: number) => void;
+  setImageDuration: (duration: number) => void;
+  setExportSettings: (settings: Partial<ExportSettings>) => void;
   setIsExporting: (isExporting: boolean) => void;
   setExportProgress: (progress: number) => void;
   setExportSuccess: (
@@ -36,6 +45,9 @@ interface ImageStore {
   ) => void;
   clearExportSuccess: () => void;
   clearImages: () => void;
+
+  // Computed
+  getFps: () => number;
 }
 
 // Deterministic ID generator using timestamp and counter
@@ -46,7 +58,11 @@ const generateId = () => {
 
 export const useImageStore = create<ImageStore>((set, get) => ({
   images: [],
-  fps: 30,
+  imageDuration: 1.0, // Default: 1 second per image
+  exportSettings: {
+    quality: "high",
+    scale: 1.0, // 100% scale
+  },
   isExporting: false,
   exportProgress: 0,
   exportSuccess: null,
@@ -85,8 +101,14 @@ export const useImageStore = create<ImageStore>((set, get) => ({
     });
   },
 
-  setFps: (fps: number) => {
-    set({ fps });
+  setImageDuration: (duration: number) => {
+    set({ imageDuration: duration });
+  },
+
+  setExportSettings: (settings: Partial<ExportSettings>) => {
+    set((state) => ({
+      exportSettings: { ...state.exportSettings, ...settings },
+    }));
   },
 
   setIsExporting: (isExporting: boolean) => {
@@ -116,5 +138,12 @@ export const useImageStore = create<ImageStore>((set, get) => ({
     const { images } = get();
     images.forEach((img) => URL.revokeObjectURL(img.url));
     set({ images: [] });
+  },
+
+  // Calculate FPS based on image duration
+  getFps: () => {
+    const { imageDuration } = get();
+    // FPS = 1 / duration, with minimum of 1 FPS for very long durations
+    return Math.max(1, Math.round(1 / imageDuration));
   },
 }));

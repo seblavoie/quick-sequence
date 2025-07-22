@@ -1,8 +1,14 @@
-import { ImageItem } from "../store/useImageStore";
+import {
+  ExportSettings,
+  ImageItem,
+  QualityPreset,
+} from "../store/useImageStore";
 
 export interface ExportOptions {
   images: ImageItem[];
   fps: number;
+  imageDuration?: number; // Duration each image shows (in seconds)
+  exportSettings?: ExportSettings;
   onProgress?: (progress: number) => void;
 }
 
@@ -97,9 +103,27 @@ const getBestVideoFormat = (): {
   );
 };
 
+// Quality preset configurations
+const getQualityConfig = (quality: QualityPreset) => {
+  switch (quality) {
+    case "low":
+      return { bitrate: 2000000, bitrateMultiplier: 0.5 }; // 2 Mbps
+    case "medium":
+      return { bitrate: 4000000, bitrateMultiplier: 0.75 }; // 4 Mbps
+    case "high":
+      return { bitrate: 8000000, bitrateMultiplier: 1.0 }; // 8 Mbps
+    case "ultra":
+      return { bitrate: 15000000, bitrateMultiplier: 1.5 }; // 15 Mbps
+    default:
+      return { bitrate: 8000000, bitrateMultiplier: 1.0 };
+  }
+};
+
 export const exportToH264 = async ({
   images,
   fps,
+  imageDuration = 1.0, // Default to 1 second per image
+  exportSettings = { quality: "high", scale: 1.0 },
   onProgress,
 }: ExportOptions): Promise<ExportResult> => {
   if (images.length === 0) {
@@ -107,10 +131,18 @@ export const exportToH264 = async ({
   }
 
   try {
-    // Video configuration
-    const width = 1920;
-    const height = 1080;
-    const videoBitrate = 8000000; // 8 Mbps for good quality
+    // Video configuration based on export settings
+    const baseWidth = 1920;
+    const baseHeight = 1080;
+    const width = Math.round(baseWidth * exportSettings.scale);
+    const height = Math.round(baseHeight * exportSettings.scale);
+
+    const qualityConfig = getQualityConfig(exportSettings.quality);
+    const videoBitrate = Math.round(
+      qualityConfig.bitrate *
+        exportSettings.scale *
+        qualityConfig.bitrateMultiplier,
+    );
 
     // Create canvas
     const canvas = document.createElement("canvas");
@@ -158,9 +190,9 @@ export const exportToH264 = async ({
     mediaRecorder.start();
     onProgress?.(30);
 
-    // Calculate timing
+    // Calculate timing based on image duration and fps
     const frameInterval = 1000 / fps; // milliseconds per frame
-    const framesPerImage = fps; // 1 second per image
+    const framesPerImage = Math.max(1, Math.round(imageDuration * fps)); // frames per image
     const totalFrames = images.length * framesPerImage;
 
     let currentFrame = 0;
@@ -168,7 +200,7 @@ export const exportToH264 = async ({
     // Animation function
     const renderFrame = () => {
       return new Promise<void>((resolve) => {
-        // Determine which image to show
+        // Determine which image to show based on frames
         const imageIndex = Math.floor(currentFrame / framesPerImage);
 
         if (imageIndex < loadedImages.length) {
@@ -231,15 +263,15 @@ export const exportToH264 = async ({
 
     onProgress?.(100);
 
-    // Return success data instead of showing alert
-    const durationInSeconds = images.length;
+    // Return success data
+    const totalDuration = images.length * imageDuration;
     const fileSizeMB = (videoBlob.size / (1024 * 1024)).toFixed(1);
 
     return {
       filename,
       fileSize: `${fileSizeMB} MB`,
-      duration: durationInSeconds,
-      format: videoFormat.formatName,
+      duration: totalDuration,
+      format: `${videoFormat.formatName} (${width}×${height}, ${exportSettings.quality.toUpperCase()})`,
     };
   } catch (error) {
     console.error("Export failed:", error);

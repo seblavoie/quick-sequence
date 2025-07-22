@@ -7,14 +7,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Progress } from "./ui/progress";
 
 export const VideoPreview: React.FC = () => {
-  const { images, fps } = useImageStore();
+  const { images, imageDuration, getFps } = useImageStore();
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const intervalRef = useRef<number | null>(null);
 
-  // Each image shows for 1 second (1000ms), regardless of FPS
-  const imageDuration = 1000; // 1 second per image
+  // Use the actual image duration from store (in milliseconds)
+  const imageDisplayDuration = imageDuration * 1000;
+  const fps = getFps();
 
   useEffect(() => {
     setCurrentImageIndex(0);
@@ -36,7 +37,7 @@ export const VideoPreview: React.FC = () => {
           setProgress(nextIndex === 0 ? 0 : newProgress);
           return nextIndex;
         });
-      }, imageDuration); // Use imageDuration instead of frameDuration
+      }, imageDisplayDuration);
     } else {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -49,7 +50,7 @@ export const VideoPreview: React.FC = () => {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isPlaying, images.length, imageDuration]);
+  }, [isPlaying, images.length, imageDisplayDuration]);
 
   useEffect(() => {
     if (images.length > 0) {
@@ -70,8 +71,8 @@ export const VideoPreview: React.FC = () => {
   };
 
   const currentImage = images[currentImageIndex];
-  const totalDuration = images.length; // Each image = 1 second
-  const currentTime = currentImageIndex + 1; // Current time in seconds
+  const totalDuration = images.length * imageDuration; // Total duration in seconds
+  const currentTime = (currentImageIndex + 1) * imageDuration; // Current time in seconds
 
   if (images.length === 0) {
     return (
@@ -196,7 +197,7 @@ export const VideoPreview: React.FC = () => {
             <div className="mt-1 flex items-center justify-center space-x-2 text-xs text-gray-600">
               <span>Image {currentImageIndex + 1}</span>
               <span>•</span>
-              <span>1s duration</span>
+              <span>{imageDuration}s duration</span>
               <span>•</span>
               <span>{fps} FPS export</span>
               <span>•</span>

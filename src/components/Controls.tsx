@@ -10,17 +10,22 @@ import { Slider } from "./ui/slider";
 
 export const Controls: React.FC = () => {
   const {
-    fps,
+    imageDuration,
     images,
+    exportSettings,
     isExporting,
     exportProgress,
     exportSuccess,
-    setFps,
+    setImageDuration,
+    setExportSettings,
     setIsExporting,
     setExportProgress,
     setExportSuccess,
     clearExportSuccess,
+    getFps,
   } = useImageStore();
+
+  const fps = getFps();
 
   const handleExport = async () => {
     if (images.length === 0) {
@@ -36,6 +41,8 @@ export const Controls: React.FC = () => {
       const result = await exportToH264({
         images,
         fps,
+        imageDuration,
+        exportSettings,
         onProgress: (progress) => {
           setExportProgress(progress);
         },
@@ -51,8 +58,8 @@ export const Controls: React.FC = () => {
     }
   };
 
-  const durationInSeconds = images.length > 0 ? images.length / fps : 0;
-  const totalFrames = Math.ceil(durationInSeconds * fps);
+  const totalDuration = images.length > 0 ? images.length * imageDuration : 0;
+  const totalFrames = Math.ceil(totalDuration * fps);
 
   return (
     <Card className="border-gray-200">
@@ -104,30 +111,38 @@ export const Controls: React.FC = () => {
           </div>
         )}
 
-        {/* FPS Control */}
+        {/* Image Duration Control */}
         <div>
           <div className="mb-3 flex items-center justify-between">
             <label className="text-sm font-medium text-gray-900">
-              Frame Rate
+              Image Duration
             </label>
-            <Badge
-              variant="outline"
-              className="border-gray-200 bg-gray-50 text-gray-700"
-            >
-              {fps} FPS
-            </Badge>
+            <div className="flex items-center space-x-2">
+              <Badge
+                variant="outline"
+                className="border-gray-200 bg-gray-50 text-gray-700"
+              >
+                {imageDuration}s
+              </Badge>
+              <Badge
+                variant="outline"
+                className="border-blue-200 bg-blue-50 text-blue-700"
+              >
+                {fps} FPS
+              </Badge>
+            </div>
           </div>
           <Slider
-            value={[fps]}
-            onValueChange={([value]) => setFps(value)}
-            min={1}
-            max={120}
-            step={1}
+            value={[imageDuration]}
+            onValueChange={([value]) => setImageDuration(value)}
+            min={0.1}
+            max={5.0}
+            step={0.1}
             className="w-full"
           />
           <div className="mt-2 flex justify-between text-xs text-gray-500">
-            <span>1 FPS (slow)</span>
-            <span>120 FPS (fast)</span>
+            <span>0.1s (fast)</span>
+            <span>5.0s (slow)</span>
           </div>
         </div>
 
@@ -145,7 +160,7 @@ export const Controls: React.FC = () => {
             </div>
             <div>
               <div className="text-xl font-bold text-gray-900">
-                {durationInSeconds.toFixed(1)}s
+                {totalDuration.toFixed(1)}s
               </div>
               <div className="text-xs text-gray-600">Duration</div>
             </div>
@@ -160,12 +175,107 @@ export const Controls: React.FC = () => {
 
         {/* Export Section */}
         <div>
-          <h4 className="mb-3 text-sm font-medium text-gray-900">Export</h4>
+          <h4 className="mb-3 text-sm font-medium text-gray-900">
+            Export Settings
+          </h4>
+
+          {/* Quality Control */}
+          <div className="mb-4">
+            <div className="mb-2 flex items-center justify-between">
+              <label className="text-sm font-medium text-gray-900">
+                Quality
+              </label>
+              <Badge
+                variant="outline"
+                className="border-purple-200 bg-purple-50 text-purple-700"
+              >
+                {exportSettings.quality.toUpperCase()}
+              </Badge>
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              {(["low", "medium", "high", "ultra"] as const).map((quality) => (
+                <Button
+                  key={quality}
+                  variant={
+                    exportSettings.quality === quality ? "default" : "outline"
+                  }
+                  size="sm"
+                  onClick={() => setExportSettings({ quality })}
+                  className={
+                    exportSettings.quality === quality
+                      ? "bg-purple-600 hover:bg-purple-700"
+                      : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                  }
+                >
+                  {quality.charAt(0).toUpperCase() + quality.slice(1)}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Scale Control */}
+          <div className="mb-4">
+            <div className="mb-2 flex items-center justify-between">
+              <label className="text-sm font-medium text-gray-900">Scale</label>
+              <div className="flex items-center space-x-2">
+                <Badge
+                  variant="outline"
+                  className="border-orange-200 bg-orange-50 text-orange-700"
+                >
+                  {Math.round(exportSettings.scale * 100)}%
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="border-gray-200 bg-gray-50 text-gray-700"
+                >
+                  {Math.round(1920 * exportSettings.scale)}×
+                  {Math.round(1080 * exportSettings.scale)}
+                </Badge>
+              </div>
+            </div>
+            <div className="grid grid-cols-4 gap-2 mb-2">
+              {[0.25, 0.5, 0.75, 1.0].map((scale) => (
+                <Button
+                  key={scale}
+                  variant={
+                    exportSettings.scale === scale ? "default" : "outline"
+                  }
+                  size="sm"
+                  onClick={() => setExportSettings({ scale })}
+                  className={
+                    exportSettings.scale === scale
+                      ? "bg-orange-600 hover:bg-orange-700"
+                      : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                  }
+                >
+                  {Math.round(scale * 100)}%
+                </Button>
+              ))}
+            </div>
+            <Slider
+              value={[exportSettings.scale]}
+              onValueChange={([value]) => setExportSettings({ scale: value })}
+              min={0.25}
+              max={1.0}
+              step={0.05}
+              className="w-full"
+            />
+            <div className="mt-1 flex justify-between text-xs text-gray-500">
+              <span>25% (480p)</span>
+              <span>100% (1080p)</span>
+            </div>
+          </div>
+
           {images.length > 0 ? (
             <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3">
               <p className="text-sm text-green-800">
                 Ready to export {images.length} images as a{" "}
-                {durationInSeconds.toFixed(1)}s video at {fps} FPS
+                {totalDuration.toFixed(1)}s video ({imageDuration}s per image)
+              </p>
+              <p className="text-xs text-green-700 mt-1">
+                Output: {Math.round(1920 * exportSettings.scale)}×
+                {Math.round(1080 * exportSettings.scale)} •{" "}
+                {exportSettings.quality.toUpperCase()} quality
               </p>
             </div>
           ) : (
