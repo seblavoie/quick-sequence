@@ -11,9 +11,10 @@ export const VideoPreview: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [progress, setProgress] = useState(0);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<number | null>(null);
 
-  const frameDuration = 1000 / fps;
+  // Each image shows for 1 second (1000ms), regardless of FPS
+  const imageDuration = 1000; // 1 second per image
 
   useEffect(() => {
     setCurrentImageIndex(0);
@@ -35,7 +36,7 @@ export const VideoPreview: React.FC = () => {
           setProgress(nextIndex === 0 ? 0 : newProgress);
           return nextIndex;
         });
-      }, frameDuration);
+      }, imageDuration); // Use imageDuration instead of frameDuration
     } else {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -48,7 +49,7 @@ export const VideoPreview: React.FC = () => {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isPlaying, images.length, frameDuration]);
+  }, [isPlaying, images.length, imageDuration]);
 
   useEffect(() => {
     if (images.length > 0) {
@@ -69,8 +70,8 @@ export const VideoPreview: React.FC = () => {
   };
 
   const currentImage = images[currentImageIndex];
-  const totalDuration = images.length / fps;
-  const currentTime = (currentImageIndex + 1) / fps;
+  const totalDuration = images.length; // Each image = 1 second
+  const currentTime = currentImageIndex + 1; // Current time in seconds
 
   if (images.length === 0) {
     return (
@@ -193,9 +194,11 @@ export const VideoPreview: React.FC = () => {
               {currentImage?.name}
             </p>
             <div className="mt-1 flex items-center justify-center space-x-2 text-xs text-gray-600">
-              <span>Frame {currentImageIndex + 1}</span>
+              <span>Image {currentImageIndex + 1}</span>
               <span>•</span>
-              <span>{fps} FPS</span>
+              <span>1s duration</span>
+              <span>•</span>
+              <span>{fps} FPS export</span>
               <span>•</span>
               <span>Looping</span>
             </div>

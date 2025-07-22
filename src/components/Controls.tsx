@@ -1,13 +1,26 @@
-import { Download, Loader2, Settings } from "lucide-react";
+import { CheckCircle2, Download, Loader2, Settings, X } from "lucide-react";
 import React from "react";
+import { exportToH264 } from "../lib/videoExport";
 import { useImageStore } from "../store/useImageStore";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Progress } from "./ui/progress";
 import { Slider } from "./ui/slider";
 
 export const Controls: React.FC = () => {
-  const { fps, images, isExporting, setFps, setIsExporting } = useImageStore();
+  const {
+    fps,
+    images,
+    isExporting,
+    exportProgress,
+    exportSuccess,
+    setFps,
+    setIsExporting,
+    setExportProgress,
+    setExportSuccess,
+    clearExportSuccess,
+  } = useImageStore();
 
   const handleExport = async () => {
     if (images.length === 0) {
@@ -16,17 +29,25 @@ export const Controls: React.FC = () => {
     }
 
     setIsExporting(true);
+    setExportProgress(0);
+    clearExportSuccess();
 
     try {
-      alert(
-        `Would export ${images.length} images at ${fps} FPS as H.264 video`,
-      );
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const result = await exportToH264({
+        images,
+        fps,
+        onProgress: (progress) => {
+          setExportProgress(progress);
+        },
+      });
+
+      setExportSuccess(result);
     } catch (error) {
       console.error("Export failed:", error);
       alert("Export failed. Please try again.");
     } finally {
       setIsExporting(false);
+      setExportProgress(0);
     }
   };
 
@@ -42,6 +63,47 @@ export const Controls: React.FC = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Export Success Message */}
+        {exportSuccess && (
+          <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center">
+                <CheckCircle2 className="mr-2 h-5 w-5 text-green-600" />
+                <div>
+                  <h4 className="text-sm font-medium text-green-800">
+                    Video exported successfully!
+                  </h4>
+                  <div className="mt-2 text-sm text-green-700">
+                    <p>
+                      <strong>File:</strong> {exportSuccess.filename}
+                    </p>
+                    <p>
+                      <strong>Size:</strong> {exportSuccess.fileSize}
+                    </p>
+                    <p>
+                      <strong>Duration:</strong> {exportSuccess.duration}s
+                    </p>
+                    <p>
+                      <strong>Format:</strong> {exportSuccess.format}
+                    </p>
+                    <p className="mt-1">
+                      The video has been downloaded to your Downloads folder.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={clearExportSuccess}
+                className="text-green-600 hover:text-green-800"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* FPS Control */}
         <div>
           <div className="mb-3 flex items-center justify-between">
@@ -114,6 +176,19 @@ export const Controls: React.FC = () => {
             </div>
           )}
 
+          {/* Export Progress */}
+          {isExporting && (
+            <div className="mb-4">
+              <div className="mb-2 flex justify-between text-sm">
+                <span className="text-gray-600">Creating video...</span>
+                <span className="text-gray-900">
+                  {Math.round(exportProgress)}%
+                </span>
+              </div>
+              <Progress value={exportProgress} className="w-full" />
+            </div>
+          )}
+
           <Button
             onClick={handleExport}
             disabled={images.length === 0 || isExporting}
@@ -123,7 +198,7 @@ export const Controls: React.FC = () => {
             {isExporting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Exporting video...
+                Creating video...
               </>
             ) : (
               <>

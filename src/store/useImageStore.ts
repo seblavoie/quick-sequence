@@ -11,6 +11,13 @@ interface ImageStore {
   images: ImageItem[];
   fps: number;
   isExporting: boolean;
+  exportProgress: number;
+  exportSuccess: {
+    filename: string;
+    fileSize: string;
+    duration: number;
+    format: string;
+  } | null;
 
   // Actions
   addImages: (files: File[]) => void;
@@ -18,6 +25,16 @@ interface ImageStore {
   reorderImages: (oldIndex: number, newIndex: number) => void;
   setFps: (fps: number) => void;
   setIsExporting: (isExporting: boolean) => void;
+  setExportProgress: (progress: number) => void;
+  setExportSuccess: (
+    success: {
+      filename: string;
+      fileSize: string;
+      duration: number;
+      format: string;
+    } | null,
+  ) => void;
+  clearExportSuccess: () => void;
   clearImages: () => void;
 }
 
@@ -31,6 +48,8 @@ export const useImageStore = create<ImageStore>((set, get) => ({
   images: [],
   fps: 30,
   isExporting: false,
+  exportProgress: 0,
+  exportSuccess: null,
 
   addImages: (files: File[]) => {
     const newImages: ImageItem[] = files.map((file) => ({
@@ -71,7 +90,26 @@ export const useImageStore = create<ImageStore>((set, get) => ({
   },
 
   setIsExporting: (isExporting: boolean) => {
-    set({ isExporting });
+    set({ isExporting, exportProgress: isExporting ? 0 : 0 });
+  },
+
+  setExportProgress: (progress: number) => {
+    set({ exportProgress: progress });
+  },
+
+  setExportSuccess: (
+    success: {
+      filename: string;
+      fileSize: string;
+      duration: number;
+      format: string;
+    } | null,
+  ) => {
+    set({ exportSuccess: success });
+  },
+
+  clearExportSuccess: () => {
+    set({ exportSuccess: null });
   },
 
   clearImages: () => {
