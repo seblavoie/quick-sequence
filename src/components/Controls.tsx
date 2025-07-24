@@ -1,6 +1,6 @@
 import { CheckCircle2, Download, Loader2, Settings, X } from "lucide-react";
 import React from "react";
-import { exportToH264 } from "../lib/videoExport";
+import { exportMedia } from "../lib/videoExport";
 import { useImageStore } from "../store/useImageStore";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -38,7 +38,7 @@ export const Controls: React.FC = () => {
     clearExportSuccess();
 
     try {
-      const result = await exportToH264({
+      const result = await exportMedia({
         images,
         fps,
         imageDuration,
@@ -62,138 +62,142 @@ export const Controls: React.FC = () => {
   const totalFrames = Math.ceil(totalDuration * fps);
 
   return (
-    <Card className="border-gray-200">
-      <CardHeader className="pb-4">
-        <CardTitle className="flex items-center text-lg font-semibold text-gray-900">
-          <Settings className="mr-2 h-5 w-5 text-gray-600" />
-          Settings
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Export Success Message */}
-        {exportSuccess && (
-          <div className="rounded-lg border border-green-200 bg-green-50 p-4">
-            <div className="flex items-start justify-between">
-              <div className="flex items-center">
-                <CheckCircle2 className="mr-2 h-5 w-5 text-green-600" />
-                <div>
-                  <h4 className="text-sm font-medium text-green-800">
-                    Video exported successfully!
-                  </h4>
-                  <div className="mt-2 text-sm text-green-700">
-                    <p>
-                      <strong>File:</strong> {exportSuccess.filename}
-                    </p>
-                    <p>
-                      <strong>Size:</strong> {exportSuccess.fileSize}
-                    </p>
-                    <p>
-                      <strong>Duration:</strong> {exportSuccess.duration}s
-                    </p>
-                    <p>
-                      <strong>Format:</strong> {exportSuccess.format}
-                    </p>
-                    <p className="mt-1">
-                      The video has been downloaded to your Downloads folder.
-                    </p>
-                  </div>
+    <div className="space-y-6">
+      {/* Export Success Message */}
+      {exportSuccess && (
+        <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center">
+              <CheckCircle2 className="mr-2 h-5 w-5 text-green-600" />
+              <div>
+                <h4 className="text-sm font-medium text-green-800">
+                  {exportSettings.format === "h264" ? "Video" : "GIF"} exported
+                  successfully!
+                </h4>
+                <div className="mt-2 text-sm text-green-700">
+                  <p>
+                    <strong>File:</strong> {exportSuccess.filename}
+                  </p>
+                  <p>
+                    <strong>Size:</strong> {exportSuccess.fileSize}
+                  </p>
+                  <p>
+                    <strong>Duration:</strong> {exportSuccess.duration}s
+                  </p>
+                  <p>
+                    <strong>Format:</strong> {exportSuccess.format}
+                  </p>
+                  <p className="mt-1">
+                    The{" "}
+                    {exportSettings.format === "h264" ? "video" : "GIF file"}{" "}
+                    has been downloaded to your Downloads folder.
+                  </p>
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearExportSuccess}
-                className="text-green-600 hover:text-green-800"
-              >
-                <X className="h-4 w-4" />
-              </Button>
             </div>
-          </div>
-        )}
-
-        {/* Image Duration Control */}
-        <div>
-          <div className="mb-3 flex items-center justify-between">
-            <label className="text-sm font-medium text-gray-900">
-              Image Duration
-            </label>
-            <div className="flex items-center space-x-2">
-              <Badge
-                variant="outline"
-                className="border-gray-200 bg-gray-50 text-gray-700"
-              >
-                {imageDuration}s
-              </Badge>
-              <Badge
-                variant="outline"
-                className="border-blue-200 bg-blue-50 text-blue-700"
-              >
-                {fps} FPS
-              </Badge>
-            </div>
-          </div>
-          <Slider
-            value={[imageDuration]}
-            onValueChange={([value]) => setImageDuration(value)}
-            min={0.1}
-            max={5.0}
-            step={0.1}
-            className="w-full"
-          />
-          <div className="mt-2 flex justify-between text-xs text-gray-500">
-            <span>0.1s (fast)</span>
-            <span>5.0s (slow)</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearExportSuccess}
+              className="text-green-600 hover:text-green-800"
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </div>
         </div>
+      )}
 
-        {/* Video Stats */}
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-          <h4 className="mb-3 text-sm font-medium text-gray-900">
-            Video Information
-          </h4>
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div>
-              <div className="text-xl font-bold text-gray-900">
-                {images.length}
+      {/* Settings Card */}
+      <Card className="border-gray-200">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center text-lg font-semibold text-gray-900">
+            <Settings className="mr-2 h-5 w-5 text-gray-600" />
+            Settings
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Image Duration Control */}
+          <div>
+            <div className="mb-3 flex items-center justify-between">
+              <label className="text-sm font-medium text-gray-900">
+                Image Duration
+              </label>
+              <div className="flex items-center space-x-2">
+                <Badge
+                  variant="outline"
+                  className="border-gray-200 bg-gray-50 text-gray-700"
+                >
+                  {imageDuration}s
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className="border-blue-200 bg-blue-50 text-blue-700"
+                >
+                  {fps} FPS
+                </Badge>
               </div>
-              <div className="text-xs text-gray-600">Images</div>
             </div>
-            <div>
-              <div className="text-xl font-bold text-gray-900">
-                {totalDuration.toFixed(1)}s
-              </div>
-              <div className="text-xs text-gray-600">Duration</div>
-            </div>
-            <div>
-              <div className="text-xl font-bold text-gray-900">
-                {totalFrames}
-              </div>
-              <div className="text-xs text-gray-600">Frames</div>
+            <Slider
+              value={[imageDuration]}
+              onValueChange={([value]) => setImageDuration(value)}
+              min={0.1}
+              max={5.0}
+              step={0.1}
+              className="w-full"
+            />
+            <div className="mt-2 flex justify-between text-xs text-gray-500">
+              <span>0.1s (fast)</span>
+              <span>5.0s (slow)</span>
             </div>
           </div>
-        </div>
 
-        {/* Export Section */}
-        <div>
-          <h4 className="mb-3 text-sm font-medium text-gray-900">
+          {/* Video Stats */}
+          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+            <h4 className="mb-3 text-sm font-medium text-gray-900">
+              Video Information
+            </h4>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div>
+                <div className="text-xl font-bold text-gray-900">
+                  {images.length}
+                </div>
+                <div className="text-xs text-gray-600">Images</div>
+              </div>
+              <div>
+                <div className="text-xl font-bold text-gray-900">
+                  {totalDuration.toFixed(1)}s
+                </div>
+                <div className="text-xs text-gray-600">Duration</div>
+              </div>
+              <div>
+                <div className="text-xl font-bold text-gray-900">
+                  {totalFrames}
+                </div>
+                <div className="text-xs text-gray-600">Frames</div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Export Settings Card */}
+      <Card className="border-gray-200">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center text-lg font-semibold text-gray-900">
+            <Download className="mr-2 h-5 w-5 text-gray-600" />
             Export Settings
-          </h4>
-
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
           {/* Quality Control */}
-          <div className="mb-4">
-            <div className="mb-2 flex items-center justify-between">
+          <div>
+            <div className="mb-2">
               <label className="text-sm font-medium text-gray-900">
                 Quality
               </label>
-              <Badge
-                variant="outline"
-                className="border-purple-200 bg-purple-50 text-purple-700"
-              >
-                {exportSettings.quality.toUpperCase()}
-              </Badge>
             </div>
-            <div className="grid grid-cols-4 gap-2">
-              {(["low", "medium", "high", "ultra"] as const).map((quality) => (
+            <div className="grid grid-cols-3 gap-2">
+              {(["low", "medium", "full"] as const).map((quality) => (
                 <Button
                   key={quality}
                   variant={
@@ -213,27 +217,46 @@ export const Controls: React.FC = () => {
             </div>
           </div>
 
-          {/* Scale Control */}
-          <div className="mb-4">
-            <div className="mb-2 flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-900">Scale</label>
-              <div className="flex items-center space-x-2">
-                <Badge
-                  variant="outline"
-                  className="border-orange-200 bg-orange-50 text-orange-700"
-                >
-                  {Math.round(exportSettings.scale * 100)}%
-                </Badge>
-                <Badge
-                  variant="outline"
-                  className="border-gray-200 bg-gray-50 text-gray-700"
-                >
-                  {Math.round(1920 * exportSettings.scale)}×
-                  {Math.round(1080 * exportSettings.scale)}
-                </Badge>
-              </div>
+          {/* Format Control */}
+          <div>
+            <div className="mb-2">
+              <label className="text-sm font-medium text-gray-900">
+                Format
+              </label>
             </div>
-            <div className="grid grid-cols-4 gap-2 mb-2">
+            <div className="grid grid-cols-2 gap-2">
+              {(["h264", "gif"] as const).map((format) => (
+                <Button
+                  key={format}
+                  variant={
+                    exportSettings.format === format ? "default" : "outline"
+                  }
+                  size="sm"
+                  onClick={() => setExportSettings({ format })}
+                  className={
+                    exportSettings.format === format
+                      ? "bg-blue-600 hover:bg-blue-700"
+                      : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                  }
+                >
+                  {format === "h264" ? "MP4" : "GIF"}
+                </Button>
+              ))}
+            </div>
+            {exportSettings.format === "gif" && (
+              <p className="mt-2 text-xs text-green-600">
+                ✨ Creates animated GIF with all images cycling at your chosen
+                duration
+              </p>
+            )}
+          </div>
+
+          {/* Scale Control */}
+          <div>
+            <div className="mb-2">
+              <label className="text-sm font-medium text-gray-900">Scale</label>
+            </div>
+            <div className="grid grid-cols-4 gap-2">
               {[0.25, 0.5, 0.75, 1.0].map((scale) => (
                 <Button
                   key={scale}
@@ -244,7 +267,7 @@ export const Controls: React.FC = () => {
                   onClick={() => setExportSettings({ scale })}
                   className={
                     exportSettings.scale === scale
-                      ? "bg-orange-600 hover:bg-orange-700"
+                      ? "bg-purple-600 hover:bg-purple-700"
                       : "border-gray-300 text-gray-700 hover:bg-gray-50"
                   }
                 >
@@ -252,73 +275,105 @@ export const Controls: React.FC = () => {
                 </Button>
               ))}
             </div>
-            <Slider
-              value={[exportSettings.scale]}
-              onValueChange={([value]) => setExportSettings({ scale: value })}
-              min={0.25}
-              max={1.0}
-              step={0.05}
-              className="w-full"
-            />
-            <div className="mt-1 flex justify-between text-xs text-gray-500">
-              <span>25% (480p)</span>
-              <span>100% (1080p)</span>
-            </div>
           </div>
 
-          {images.length > 0 ? (
-            <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3">
-              <p className="text-sm text-green-800">
-                Ready to export {images.length} images as a{" "}
-                {totalDuration.toFixed(1)}s video ({imageDuration}s per image)
-              </p>
-              <p className="text-xs text-green-700 mt-1">
-                Output: {Math.round(1920 * exportSettings.scale)}×
-                {Math.round(1080 * exportSettings.scale)} •{" "}
-                {exportSettings.quality.toUpperCase()} quality
-              </p>
-            </div>
-          ) : (
-            <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
-              <p className="text-sm text-gray-600">
-                Add images to enable video export
-              </p>
-            </div>
-          )}
-
-          {/* Export Progress */}
-          {isExporting && (
-            <div className="mb-4">
-              <div className="mb-2 flex justify-between text-sm">
-                <span className="text-gray-600">Creating video...</span>
-                <span className="text-gray-900">
-                  {Math.round(exportProgress)}%
-                </span>
+          {/* Export Status and Button */}
+          <div>
+            {images.length > 0 ? (
+              <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3">
+                <p className="text-sm text-green-800">
+                  Ready to export {images.length} images as a{" "}
+                  {exportSettings.format === "h264"
+                    ? `${totalDuration.toFixed(1)}s video`
+                    : `${totalDuration.toFixed(1)}s animated GIF (${images.length} frames)`}{" "}
+                  ({imageDuration}s per image)
+                </p>
+                <p className="text-xs text-green-700 mt-1">
+                  Output: {Math.round(1920 * exportSettings.scale)}×
+                  {Math.round(1080 * exportSettings.scale)} •{" "}
+                  {exportSettings.quality.toUpperCase()} quality •{" "}
+                  {exportSettings.format === "h264" ? "MP4" : "GIF"} format
+                </p>
               </div>
-              <Progress value={exportProgress} className="w-full" />
-            </div>
-          )}
-
-          <Button
-            onClick={handleExport}
-            disabled={images.length === 0 || isExporting}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500"
-            size="lg"
-          >
-            {isExporting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating video...
-              </>
             ) : (
-              <>
-                <Download className="mr-2 h-4 w-4" />
-                Export to H.264
-              </>
+              <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <p className="text-sm text-gray-600">
+                  Add images to enable export
+                </p>
+              </div>
             )}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+
+            {/* Export Progress */}
+            {isExporting && (
+              <div className="mb-4">
+                <div className="mb-2 flex justify-between text-sm">
+                  <span className="text-gray-600">
+                    Creating{" "}
+                    {exportSettings.format === "h264"
+                      ? "video"
+                      : "animated GIF"}
+                    ...
+                  </span>
+                  <span className="text-gray-900">
+                    {Math.round(exportProgress)}%
+                  </span>
+                </div>
+                <Progress value={exportProgress} className="w-full" />
+              </div>
+            )}
+
+            {/* Current Selection Pills */}
+            <div className="mb-4 flex flex-wrap gap-2 justify-center">
+              <Badge
+                variant="outline"
+                className="border-purple-200 bg-purple-50 text-purple-700"
+              >
+                {exportSettings.quality.toUpperCase()}
+              </Badge>
+              <Badge
+                variant="outline"
+                className="border-blue-200 bg-blue-50 text-blue-700"
+              >
+                {exportSettings.format === "h264" ? "MP4" : "GIF"}
+              </Badge>
+              <Badge
+                variant="outline"
+                className="border-orange-200 bg-orange-50 text-orange-700"
+              >
+                {Math.round(exportSettings.scale * 100)}%
+              </Badge>
+              <Badge
+                variant="outline"
+                className="border-gray-200 bg-gray-50 text-gray-700"
+              >
+                {Math.round(1920 * exportSettings.scale)}×
+                {Math.round(1080 * exportSettings.scale)}
+              </Badge>
+            </div>
+
+            <Button
+              onClick={handleExport}
+              disabled={images.length === 0 || isExporting}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500"
+              size="lg"
+            >
+              {isExporting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating{" "}
+                  {exportSettings.format === "h264" ? "video" : "animated GIF"}
+                  ...
+                </>
+              ) : (
+                <>
+                  <Download className="mr-2 h-4 w-4" />
+                  Export to {exportSettings.format === "h264" ? "MP4" : "GIF"}
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };

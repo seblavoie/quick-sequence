@@ -7,11 +7,13 @@ export interface ImageItem {
   name: string;
 }
 
-export type QualityPreset = "low" | "medium" | "high" | "ultra";
+export type QualityPreset = "low" | "medium" | "full";
+export type FormatPreset = "h264" | "gif";
 
 export interface ExportSettings {
   quality: QualityPreset;
   scale: number; // Scale percentage (0.25 = 25%, 1.0 = 100%)
+  format: FormatPreset;
 }
 
 interface ImageStore {
@@ -60,8 +62,9 @@ export const useImageStore = create<ImageStore>((set, get) => ({
   images: [],
   imageDuration: 1.0, // Default: 1 second per image
   exportSettings: {
-    quality: "high",
+    quality: "medium",
     scale: 1.0, // 100% scale
+    format: "h264",
   },
   isExporting: false,
   exportProgress: 0,

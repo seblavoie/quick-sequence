@@ -29,24 +29,27 @@ importers:
       '@radix-ui/react-slot':
         specifier: ^1.2.3
         version: 1.2.3(@types/react@19.0.0)(react@19.0.0)
-      '@remotion/bundler':
-        specifier: 4.0.325
-        version: 4.0.325(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@remotion/cli':
         specifier: 4.0.325
         version: 4.0.325(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
-      '@remotion/renderer':
-        specifier: 4.0.325
+      '@remotion/gif':
+        specifier: ^4.0.325
         version: 4.0.325(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@remotion/tailwind-v4':
         specifier: 4.0.325
         version: 4.0.325(@remotion/bundler@4.0.325(react-dom@19.0.0(react@19.0.0))(react@19.0.0))(typescript@5.8.2)(webpack@5.96.1)
+      '@types/gif.js':
+        specifier: ^0.2.5
+        version: 0.2.5
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      gif.js:
+        specifier: ^0.2.0
+        version: 0.2.0
       lucide-react:
         specifier: ^0.525.0
         version: 0.525.0(react@19.0.0)
@@ -1058,6 +1061,12 @@ packages:
     peerDependencies:
       eslint: '>=9'
 
+  '@remotion/gif@4.0.325':
+    resolution: {integrity: sha512-Knp2mD3DVnjCCbsHH4lHHnIyIxRcUCR69vCodsVbDud1+WmmZVfIpiHskXqSlUFWm7SnpdduwTGUIiAaplS/kA==}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+
   '@remotion/licensing@4.0.325':
     resolution: {integrity: sha512-RQ9IJC+pG/Pe8G697A6yWLGYnoImqZJXhOUuSbbVYr+jAn2R+HNFsmjQkaGIBwI4ly6eJnbv8dmB01cYV+ZAuA==}
 
@@ -1399,6 +1408,12 @@ packages:
 
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
+
+  '@types/events@3.0.3':
+    resolution: {integrity: sha512-trOc4AAUThEz9hapPtSd7wf5tiQKvTtu5b371UxXdTuqzIh0ArcRspRP0i0Viu+LXstIQ1z96t1nsPxT9ol01g==}
+
+  '@types/gif.js@0.2.5':
+    resolution: {integrity: sha512-OdDQYh9v7td9ztjaooBSqjUBAyAuui2xwDDmQcyRLd6c9T0iWgkebAoCBEdEEBoZG3ekJE/6UnH63Dzq0S3bvw==}
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
@@ -1898,6 +1913,9 @@ packages:
   get-stream@6.0.1:
     resolution: {integrity: sha512-ts6Wi+2j3jQjqi70w5AlN8DFnkSwC+MqmxEzdEALB2qXZYV3X/b1CTfgPLGJNMeAWxdPfU8FO1ms3NUfaHCPYg==}
     engines: {node: '>=10'}
+
+  gif.js@0.2.0:
+    resolution: {integrity: sha512-bYxCoT8OZKmbxY8RN4qDiYuj4nrQDTzgLRcFVovyona1PTWNePzI4nzOmotnlOFIzTk/ZxAHtv+TfVLiBWj/hw==}
 
   glob-parent@5.1.2:
     resolution: {integrity: sha512-AOIgSQCepiJYwP3ARnGx+5VnTu2HBYdzbGP45eLw1vr3zB3vZLeyed1sC9hnbcOc9/SrMyM5RPQrkGz4aS9Zow==}
@@ -3675,14 +3693,14 @@ snapshots:
       '@remotion/media-parser': 4.0.325
       '@remotion/studio': 4.0.325(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@remotion/studio-shared': 4.0.325(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
-      css-loader: 5.2.7(webpack@5.96.1(esbuild@0.25.0))
+      css-loader: 5.2.7(webpack@5.96.1)
       esbuild: 0.25.0
       react: 19.0.0
       react-dom: 19.0.0(react@19.0.0)
       react-refresh: 0.9.0
       remotion: 4.0.325(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       source-map: 0.7.3
-      style-loader: 4.0.0(webpack@5.96.1(esbuild@0.25.0))
+      style-loader: 4.0.0(webpack@5.96.1)
       webpack: 5.96.1(esbuild@0.25.0)
     transitivePeerDependencies:
       - '@swc/core'
@@ -3743,6 +3761,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
       - typescript
+
+  '@remotion/gif@4.0.325(react-dom@19.0.0(react@19.0.0))(react@19.0.0)':
+    dependencies:
+      react: 19.0.0
+      react-dom: 19.0.0(react@19.0.0)
+      remotion: 4.0.325(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
 
   '@remotion/licensing@4.0.325': {}
 
@@ -3840,11 +3864,11 @@ snapshots:
     dependencies:
       '@remotion/bundler': 4.0.325(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@tailwindcss/postcss': 4.1.1
-      css-loader: 5.2.7(webpack@5.96.1(esbuild@0.25.0))
+      css-loader: 5.2.7(webpack@5.96.1)
       postcss: 8.5.1
       postcss-loader: 8.1.1(postcss@8.5.1)(typescript@5.8.2)(webpack@5.96.1)
       postcss-preset-env: 10.1.3(postcss@8.5.1)
-      style-loader: 4.0.0(webpack@5.96.1(esbuild@0.25.0))
+      style-loader: 4.0.0(webpack@5.96.1)
       tailwindcss: 4.1.1
     transitivePeerDependencies:
       - '@rspack/core'
@@ -4091,6 +4115,12 @@ snapshots:
       '@types/json-schema': 7.0.15
 
   '@types/estree@1.0.8': {}
+
+  '@types/events@3.0.3': {}
+
+  '@types/gif.js@0.2.5':
+    dependencies:
+      '@types/events': 3.0.3
 
   '@types/json-schema@7.0.15': {}
 
@@ -4423,7 +4453,7 @@ snapshots:
       postcss-selector-parser: 7.1.0
       postcss-value-parser: 4.2.0
 
-  css-loader@5.2.7(webpack@5.96.1(esbuild@0.25.0)):
+  css-loader@5.2.7(webpack@5.96.1):
     dependencies:
       icss-utils: 5.1.0(postcss@8.5.1)
       loader-utils: 2.0.4
@@ -4701,6 +4731,8 @@ snapshots:
       pump: 3.0.3
 
   get-stream@6.0.1: {}
+
+  gif.js@0.2.0: {}
 
   glob-parent@5.1.2:
     dependencies:
@@ -5445,7 +5477,7 @@ snapshots:
 
   strip-json-comments@3.1.1: {}
 
-  style-loader@4.0.0(webpack@5.96.1(esbuild@0.25.0)):
+  style-loader@4.0.0(webpack@5.96.1):
     dependencies:
       webpack: 5.96.1(esbuild@0.25.0)
 
@@ -5476,7 +5508,7 @@ snapshots:
       mkdirp: 3.0.1
       yallist: 5.0.0
 
-  terser-webpack-plugin@5.3.14(esbuild@0.25.0)(webpack@5.96.1(esbuild@0.25.0)):
+  terser-webpack-plugin@5.3.14(esbuild@0.25.0)(webpack@5.96.1):
     dependencies:
       '@jridgewell/trace-mapping': 0.3.29
       jest-worker: 27.5.1
@@ -5582,7 +5614,7 @@ snapshots:
       neo-async: 2.6.2
       schema-utils: 3.3.0
       tapable: 2.2.2
-      terser-webpack-plugin: 5.3.14(esbuild@0.25.0)(webpack@5.96.1(esbuild@0.25.0))
+      terser-webpack-plugin: 5.3.14(esbuild@0.25.0)(webpack@5.96.1)
       watchpack: 2.4.4
       webpack-sources: 3.3.3
     transitivePeerDependencies:

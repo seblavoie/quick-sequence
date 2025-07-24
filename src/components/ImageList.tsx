@@ -104,10 +104,10 @@ const SortableImageItem: React.FC<SortableImageItemProps> = ({
 
         {/* Delete Button */}
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={() => removeImage(image.id)}
-          className="ml-4 border-red-200 text-red-700 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-50 hover:border-red-300"
+          className="ml-4 border-gray-200 text-gray-700 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-gray-50 hover:border-gray-300"
         >
           <Trash2 className="h-4 w-4" />
         </Button>

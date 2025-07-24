@@ -1,5 +1,7 @@
+import GIF from "gif.js";
 import {
   ExportSettings,
+  FormatPreset,
   ImageItem,
   QualityPreset,
 } from "../store/useImageStore";
@@ -36,8 +38,6 @@ const drawImageCentered = (
   img: HTMLImageElement,
   canvasWidth: number,
   canvasHeight: number,
-  currentImage: number,
-  totalImages: number,
 ) => {
   // Clear canvas with black background
   ctx.fillStyle = "#000000";
@@ -56,12 +56,69 @@ const drawImageCentered = (
   ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
 };
 
-// Function to get the best supported video format
-const getBestVideoFormat = (): {
+// Quality preset configurations
+const getQualityConfig = (quality: QualityPreset, format: FormatPreset) => {
+  const baseConfig = {
+    low: { videoBitrate: 2000000, crf: 28 },
+    medium: { videoBitrate: 6000000, crf: 20 },
+    full: { videoBitrate: 12000000, crf: 15 },
+  };
+
+  const config = baseConfig[quality] || baseConfig.medium;
+
+  // Adjust for format
+  if (format === "gif") {
+    // GIFs don't use bitrate in the same way
+    return { ...config, gifQuality: quality };
+  }
+
+  return config;
+};
+
+// Helper function to get codec and extension for format
+const getFormatConfig = (format: FormatPreset) => {
+  switch (format) {
+    case "h264":
+      return {
+        mimeType: "video/mp4",
+        extension: "mp4",
+        formatName: "H.264 MP4",
+      };
+    case "gif":
+      return {
+        mimeType: "image/gif",
+        extension: "gif",
+        formatName: "Animated GIF",
+      };
+    default:
+      return {
+        mimeType: "video/mp4",
+        extension: "mp4",
+        formatName: "H.264 MP4",
+      };
+  }
+};
+
+// Function to get the best supported video format for MediaRecorder
+const getBestVideoFormat = (
+  preferredMimeType: string,
+): {
   mimeType: string;
   extension: string;
   formatName: string;
 } => {
+  // Check if preferred format is supported
+  if (MediaRecorder.isTypeSupported(preferredMimeType)) {
+    const formatConfig = getFormatConfig(
+      preferredMimeType.includes("mp4") ? "h264" : "gif",
+    );
+    return {
+      mimeType: preferredMimeType,
+      extension: formatConfig.extension,
+      formatName: formatConfig.formatName,
+    };
+  }
+
   // H.264 options (preferred)
   const h264Options = [
     "video/mp4;codecs=avc1.42E01E", // H.264 Baseline
@@ -93,7 +150,7 @@ const getBestVideoFormat = (): {
       return {
         mimeType,
         extension: "webm",
-        formatName: "WebM VP9",
+        formatName: "WebM",
       };
     }
   }
@@ -103,27 +160,287 @@ const getBestVideoFormat = (): {
   );
 };
 
-// Quality preset configurations
-const getQualityConfig = (quality: QualityPreset) => {
-  switch (quality) {
-    case "low":
-      return { bitrate: 2000000, bitrateMultiplier: 0.5 }; // 2 Mbps
-    case "medium":
-      return { bitrate: 4000000, bitrateMultiplier: 0.75 }; // 4 Mbps
-    case "high":
-      return { bitrate: 8000000, bitrateMultiplier: 1.0 }; // 8 Mbps
-    case "ultra":
-      return { bitrate: 15000000, bitrateMultiplier: 1.5 }; // 15 Mbps
-    default:
-      return { bitrate: 8000000, bitrateMultiplier: 1.0 };
-  }
-};
-
-export const exportToH264 = async ({
+// Export using MediaRecorder (for MP4 and WebM)
+const exportWithMediaRecorder = async ({
   images,
   fps,
-  imageDuration = 1.0, // Default to 1 second per image
-  exportSettings = { quality: "high", scale: 1.0 },
+  imageDuration,
+  exportSettings,
+  onProgress,
+}: {
+  images: ImageItem[];
+  fps: number;
+  imageDuration: number;
+  exportSettings: ExportSettings;
+  onProgress?: (progress: number) => void;
+}): Promise<ExportResult> => {
+  const baseWidth = 1920;
+  const baseHeight = 1080;
+  const width = Math.round(baseWidth * exportSettings.scale);
+  const height = Math.round(baseHeight * exportSettings.scale);
+
+  const qualityConfig = getQualityConfig(
+    exportSettings.quality,
+    exportSettings.format,
+  );
+  const formatConfig = getFormatConfig(exportSettings.format);
+
+  // Load all images first
+  onProgress?.(10);
+  const loadedImages = await Promise.all(
+    images.map(async (img) => await loadImage(img.url)),
+  );
+  onProgress?.(20);
+
+  // Create canvas
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+
+  if (!ctx) {
+    throw new Error("Could not get canvas context");
+  }
+
+  // Get the best supported video format
+  const videoFormat = getBestVideoFormat(formatConfig.mimeType);
+
+  // Set up MediaRecorder
+  const stream = canvas.captureStream(fps);
+  const mediaRecorder = new MediaRecorder(stream, {
+    mimeType: videoFormat.mimeType,
+    videoBitsPerSecond: qualityConfig.videoBitrate * exportSettings.scale,
+  });
+
+  const chunks: Blob[] = [];
+  mediaRecorder.ondataavailable = (event) => {
+    if (event.data.size > 0) {
+      chunks.push(event.data);
+    }
+  };
+
+  // Promise to handle recording completion
+  const recordingComplete = new Promise<Blob>((resolve) => {
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(chunks, { type: videoFormat.mimeType });
+      resolve(blob);
+    };
+  });
+
+  // Start recording
+  mediaRecorder.start();
+  onProgress?.(30);
+
+  // Calculate timing based on image duration and fps
+  const frameInterval = 1000 / fps; // milliseconds per frame
+  const framesPerImage = Math.max(1, Math.round(imageDuration * fps)); // frames per image
+  const totalFrames = images.length * framesPerImage;
+
+  let currentFrame = 0;
+
+  // Animation function
+  const renderFrame = () => {
+    return new Promise<void>((resolve) => {
+      // Determine which image to show based on frames
+      const imageIndex = Math.floor(currentFrame / framesPerImage);
+
+      if (imageIndex < loadedImages.length) {
+        const img = loadedImages[imageIndex];
+        drawImageCentered(ctx, img, width, height);
+      }
+
+      currentFrame++;
+
+      // Update progress
+      const progress = 30 + (currentFrame / totalFrames) * 60; // 30% to 90%
+      onProgress?.(progress);
+
+      // Continue or finish
+      if (currentFrame < totalFrames) {
+        setTimeout(() => {
+          renderFrame().then(resolve);
+        }, frameInterval);
+      } else {
+        resolve();
+      }
+    });
+  };
+
+  // Start rendering frames
+  await renderFrame();
+
+  // Stop recording
+  mediaRecorder.stop();
+  onProgress?.(95);
+
+  // Wait for recording to complete
+  const videoBlob = await recordingComplete;
+
+  // Create download link
+  const url = URL.createObjectURL(videoBlob);
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+  const filename = `slideshow-${timestamp}.${videoFormat.extension}`;
+
+  // Trigger download
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  // Clean up
+  URL.revokeObjectURL(url);
+
+  onProgress?.(100);
+
+  // Return success data
+  const totalDuration = images.length * imageDuration;
+  const fileSizeMB = (videoBlob.size / (1024 * 1024)).toFixed(1);
+
+  return {
+    filename,
+    fileSize: `${fileSizeMB} MB`,
+    duration: totalDuration,
+    format: `${videoFormat.formatName} (${width}×${height}, ${exportSettings.quality.toUpperCase()})`,
+  };
+};
+
+// Export as animated GIF using gif.js
+const exportAsGif = async ({
+  images,
+  fps,
+  imageDuration,
+  exportSettings,
+  onProgress,
+}: {
+  images: ImageItem[];
+  fps: number;
+  imageDuration: number;
+  exportSettings: ExportSettings;
+  onProgress?: (progress: number) => void;
+}): Promise<ExportResult> => {
+  const baseWidth = 1920;
+  const baseHeight = 1080;
+  const width = Math.round(baseWidth * exportSettings.scale);
+  const height = Math.round(baseHeight * exportSettings.scale);
+
+  // Load all images first
+  onProgress?.(10);
+  const loadedImages = await Promise.all(
+    images.map(async (img) => await loadImage(img.url)),
+  );
+  onProgress?.(20);
+
+  // Configure GIF quality based on preset
+  const getGifQuality = (quality: QualityPreset) => {
+    switch (quality) {
+      case "low":
+        return 20; // Lower quality, smaller file
+      case "medium":
+        return 10; // Medium quality
+      case "full":
+        return 1; // Highest quality
+      default:
+        return 10;
+    }
+  };
+
+  // Create GIF instance
+  const gif = new GIF({
+    workers: 2,
+    quality: getGifQuality(exportSettings.quality),
+    width,
+    height,
+    workerScript: "/gif.worker.js", // Worker script in public folder
+  });
+
+  // Create canvas for rendering frames
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+
+  if (!ctx || loadedImages.length === 0) {
+    throw new Error("Could not create GIF");
+  }
+
+  onProgress?.(30);
+
+  // Convert imageDuration from seconds to milliseconds for GIF delay
+  const frameDelayMs = Math.round(imageDuration * 1000);
+
+  // Add each image as a frame to the GIF
+  for (let i = 0; i < loadedImages.length; i++) {
+    const img = loadedImages[i];
+
+    // Clear and draw the image on canvas
+    drawImageCentered(ctx, img, width, height);
+
+    // Add frame to GIF with delay
+    gif.addFrame(canvas, {
+      delay: frameDelayMs,
+      copy: true, // Important: copy the canvas data
+    });
+
+    // Update progress
+    const frameProgress = 30 + ((i + 1) / loadedImages.length) * 40; // 30% to 70%
+    onProgress?.(frameProgress);
+  }
+
+  onProgress?.(70);
+
+  // Render the GIF
+  const gifBlob = await new Promise<Blob>((resolve, reject) => {
+    gif.on("finished", (blob: Blob) => {
+      resolve(blob);
+    });
+
+    gif.on("progress", (progress: number) => {
+      // Map gif.js progress (0-1) to our progress range (70% to 95%)
+      const mappedProgress = 70 + progress * 25;
+      onProgress?.(mappedProgress);
+    });
+
+    gif.render();
+  });
+
+  onProgress?.(95);
+
+  // Create download
+  const url = URL.createObjectURL(gifBlob);
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+  const filename = `slideshow-${timestamp}.gif`;
+
+  // Trigger download
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  // Clean up
+  URL.revokeObjectURL(url);
+  onProgress?.(100);
+
+  const totalDuration = images.length * imageDuration;
+  const fileSizeMB = (gifBlob.size / (1024 * 1024)).toFixed(1);
+
+  return {
+    filename,
+    fileSize: `${fileSizeMB} MB`,
+    duration: totalDuration,
+    format: `Animated GIF (${width}×${height}, ${exportSettings.quality.toUpperCase()}, ${images.length} frames)`,
+  };
+};
+
+// Main export function
+export const exportMedia = async ({
+  images,
+  fps,
+  imageDuration = 1.0,
+  exportSettings = { quality: "medium", scale: 1.0, format: "h264" },
   onProgress,
 }: ExportOptions): Promise<ExportResult> => {
   if (images.length === 0) {
@@ -131,167 +448,41 @@ export const exportToH264 = async ({
   }
 
   try {
-    // Video configuration based on export settings
-    const baseWidth = 1920;
-    const baseHeight = 1080;
-    const width = Math.round(baseWidth * exportSettings.scale);
-    const height = Math.round(baseHeight * exportSettings.scale);
-
-    const qualityConfig = getQualityConfig(exportSettings.quality);
-    const videoBitrate = Math.round(
-      qualityConfig.bitrate *
-        exportSettings.scale *
-        qualityConfig.bitrateMultiplier,
-    );
-
-    // Create canvas
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext("2d");
-
-    if (!ctx) {
-      throw new Error("Could not get canvas context");
-    }
-
-    // Load all images first
-    onProgress?.(10);
-    const loadedImages = await Promise.all(
-      images.map(async (img) => await loadImage(img.url)),
-    );
-    onProgress?.(20);
-
-    // Get the best supported video format
-    const videoFormat = getBestVideoFormat();
-
-    // Set up MediaRecorder
-    const stream = canvas.captureStream(fps);
-    const mediaRecorder = new MediaRecorder(stream, {
-      mimeType: videoFormat.mimeType,
-      videoBitsPerSecond: videoBitrate,
-    });
-
-    const chunks: Blob[] = [];
-    mediaRecorder.ondataavailable = (event) => {
-      if (event.data.size > 0) {
-        chunks.push(event.data);
-      }
-    };
-
-    // Promise to handle recording completion
-    const recordingComplete = new Promise<Blob>((resolve) => {
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: videoFormat.mimeType });
-        resolve(blob);
-      };
-    });
-
-    // Start recording
-    mediaRecorder.start();
-    onProgress?.(30);
-
-    // Calculate timing based on image duration and fps
-    const frameInterval = 1000 / fps; // milliseconds per frame
-    const framesPerImage = Math.max(1, Math.round(imageDuration * fps)); // frames per image
-    const totalFrames = images.length * framesPerImage;
-
-    let currentFrame = 0;
-
-    // Animation function
-    const renderFrame = () => {
-      return new Promise<void>((resolve) => {
-        // Determine which image to show based on frames
-        const imageIndex = Math.floor(currentFrame / framesPerImage);
-
-        if (imageIndex < loadedImages.length) {
-          const img = loadedImages[imageIndex];
-          drawImageCentered(
-            ctx,
-            img,
-            width,
-            height,
-            imageIndex + 1,
-            images.length,
-          );
-        }
-
-        currentFrame++;
-
-        // Update progress
-        const progress = 30 + (currentFrame / totalFrames) * 60; // 30% to 90%
-        onProgress?.(progress);
-
-        // Continue or finish
-        if (currentFrame < totalFrames) {
-          setTimeout(() => {
-            renderFrame().then(resolve);
-          }, frameInterval);
-        } else {
-          resolve();
-        }
+    if (exportSettings.format === "gif") {
+      return await exportAsGif({
+        images,
+        fps,
+        imageDuration,
+        exportSettings,
+        onProgress,
       });
-    };
-
-    // Start rendering frames
-    await renderFrame();
-
-    // Stop recording
-    mediaRecorder.stop();
-    onProgress?.(95);
-
-    // Wait for recording to complete
-    const videoBlob = await recordingComplete;
-
-    // Create download link
-    const url = URL.createObjectURL(videoBlob);
-    const timestamp = new Date()
-      .toISOString()
-      .replace(/[:.]/g, "-")
-      .slice(0, 19);
-    const filename = `slideshow-${timestamp}.${videoFormat.extension}`;
-
-    // Trigger download
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-
-    // Clean up
-    URL.revokeObjectURL(url);
-
-    onProgress?.(100);
-
-    // Return success data
-    const totalDuration = images.length * imageDuration;
-    const fileSizeMB = (videoBlob.size / (1024 * 1024)).toFixed(1);
-
-    return {
-      filename,
-      fileSize: `${fileSizeMB} MB`,
-      duration: totalDuration,
-      format: `${videoFormat.formatName} (${width}×${height}, ${exportSettings.quality.toUpperCase()})`,
-    };
+    } else {
+      return await exportWithMediaRecorder({
+        images,
+        fps,
+        imageDuration,
+        exportSettings,
+        onProgress,
+      });
+    }
   } catch (error) {
     console.error("Export failed:", error);
-
-    // Provide helpful error messages
-    if (error instanceof Error) {
-      if (error.message.includes("MediaRecorder")) {
-        throw new Error(
-          "Your browser does not support video recording. Please use Chrome, Firefox, or Edge.",
-        );
-      }
-      if (error.message.includes("canvas")) {
-        throw new Error(
-          "Unable to create video canvas. Please try refreshing the page.",
-        );
-      }
-    }
-
     throw new Error(
       `Export failed: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
+};
+
+// Legacy function - now just calls the main export function
+export const exportToH264 = async (
+  options: ExportOptions,
+): Promise<ExportResult> => {
+  return exportMedia({
+    ...options,
+    exportSettings: {
+      quality: options.exportSettings?.quality || "medium",
+      scale: options.exportSettings?.scale || 1.0,
+      format: "h264" as const,
+    },
+  });
 };
