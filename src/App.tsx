@@ -6,14 +6,19 @@ import { VideoPreview } from "./components/VideoPreview";
 
 export const App: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="container mx-auto px-4 py-8">
-        <header className="mb-8 text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+        <header className="mb-12 text-center py-16">
+          <h1 className="text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-gray-900 via-indigo-900 to-purple-900 bg-clip-text text-transparent mb-4">
             Quick Stitch
           </h1>
-          <p className="text-gray-600">
-            Drag, drop, stitch. Convert image sequences to videos, quick.
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+            <span className="block">
+              Image sequences to featherweight videos.{" "}
+            </span>
+            <span className="text-indigo-600 font-semibold">
+              Drag, drop, export.
+            </span>
           </p>
         </header>
 

@@ -1,6 +1,6 @@
-# Quick Stitch - Image sequence video Creator
+# Quick Stitch - Image Sequence to Featherweight Videos
 
-Turn image sequences into MP4 or QuickTime ProRes video files locally in your browser with minimal necesseray fps for small file sizes.
+Transform image sequences into MP4 or QuickTime ProRes video files locally in your browser with minimal necessary fps for dramatically small file sizes.
 
 ## ✨ Key Benefits
 

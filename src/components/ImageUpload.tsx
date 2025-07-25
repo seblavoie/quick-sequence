@@ -23,7 +23,7 @@ export const ImageUpload: React.FC = () => {
     <div
       {...getRootProps()}
       className={cn(
-        "relative cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-colors duration-200",
+        "relative cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-colors duration-200 bg-white",
         isDragActive && !isDragReject && "border-indigo-300 bg-indigo-50",
         isDragReject && "border-red-300 bg-red-50",
         !isDragActive && "border-gray-300 hover:border-gray-400",
