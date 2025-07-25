@@ -205,16 +205,6 @@ export const VideoPreview: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {/* Status */}
-        <div className="text-center">
-          <div className="inline-flex items-center space-x-2 text-sm text-gray-600">
-            <div
-              className={`h-2 w-2 rounded-full ${isPlaying ? "bg-green-500" : "bg-gray-400"}`}
-            />
-            <span>{isPlaying ? "Playing continuously" : "Paused"}</span>
-          </div>
-        </div>
       </CardContent>
     </Card>
   );

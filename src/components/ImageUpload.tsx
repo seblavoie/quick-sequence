@@ -50,7 +50,7 @@ export const ImageUpload: React.FC = () => {
       </p>
 
       <div className="mt-4 flex flex-wrap justify-center gap-2">
-        {["JPEG", "PNG", "GIF", "WebP"].map((format) => (
+        {["JPEG", "PNG", "WebP"].map((format) => (
           <Badge
             key={format}
             variant="secondary"

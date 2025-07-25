@@ -1,5 +1,5 @@
 import { CheckCircle2, Download, Loader2, Settings, X } from "lucide-react";
-import React from "react";
+import React, { useState } from "react";
 import { exportMedia } from "../lib/videoExport";
 import { useImageStore } from "../store/useImageStore";
 import { Badge } from "./ui/badge";
@@ -25,7 +25,34 @@ export const Controls: React.FC = () => {
     getFps,
   } = useImageStore();
 
+  const [isEditingDuration, setIsEditingDuration] = useState(false);
+  const [tempDuration, setTempDuration] = useState(imageDuration.toString());
+
   const fps = getFps();
+
+  const handleDurationEdit = () => {
+    setTempDuration(imageDuration.toString());
+    setIsEditingDuration(true);
+  };
+
+  const handleDurationSave = () => {
+    const value = parseFloat(tempDuration);
+    if (!isNaN(value) && value >= 0.1 && value <= 5.0) {
+      setImageDuration(value);
+    } else {
+      setTempDuration(imageDuration.toString());
+    }
+    setIsEditingDuration(false);
+  };
+
+  const handleDurationKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleDurationSave();
+    } else if (e.key === "Escape") {
+      setTempDuration(imageDuration.toString());
+      setIsEditingDuration(false);
+    }
+  };
 
   const handleExport = async () => {
     if (images.length === 0) {
@@ -123,12 +150,28 @@ export const Controls: React.FC = () => {
                 Image Duration
               </label>
               <div className="flex items-center space-x-2">
-                <Badge
-                  variant="outline"
-                  className="border-gray-200 bg-gray-50 text-gray-700"
-                >
-                  {imageDuration}s
-                </Badge>
+                {isEditingDuration ? (
+                  <input
+                    type="number"
+                    value={tempDuration}
+                    onChange={(e) => setTempDuration(e.target.value)}
+                    onBlur={handleDurationSave}
+                    onKeyDown={handleDurationKeyPress}
+                    min={0.1}
+                    max={5.0}
+                    step={0.1}
+                    autoFocus
+                    className="w-16 rounded-md border border-indigo-500 px-2 py-1 text-xs text-center focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  />
+                ) : (
+                  <Badge
+                    variant="outline"
+                    className="border-gray-200 bg-gray-50 text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                    onClick={handleDurationEdit}
+                  >
+                    {imageDuration}s
+                  </Badge>
+                )}
                 <Badge
                   variant="outline"
                   className="border-blue-200 bg-blue-50 text-blue-700"
@@ -207,7 +250,7 @@ export const Controls: React.FC = () => {
                   onClick={() => setExportSettings({ quality })}
                   className={
                     exportSettings.quality === quality
-                      ? "bg-purple-600 hover:bg-purple-700"
+                      ? "bg-blue-600 hover:bg-blue-700"
                       : "border-gray-300 text-gray-700 hover:bg-gray-50"
                   }
                 >
@@ -267,7 +310,7 @@ export const Controls: React.FC = () => {
                   onClick={() => setExportSettings({ scale })}
                   className={
                     exportSettings.scale === scale
-                      ? "bg-purple-600 hover:bg-purple-700"
+                      ? "bg-blue-600 hover:bg-blue-700"
                       : "border-gray-300 text-gray-700 hover:bg-gray-50"
                   }
                 >
@@ -326,7 +369,7 @@ export const Controls: React.FC = () => {
             <div className="mb-4 flex flex-wrap gap-2 justify-center">
               <Badge
                 variant="outline"
-                className="border-purple-200 bg-purple-50 text-purple-700"
+                className="border-blue-200 bg-blue-50 text-blue-700"
               >
                 {exportSettings.quality.toUpperCase()}
               </Badge>
