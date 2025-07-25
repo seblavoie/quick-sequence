@@ -98,8 +98,12 @@ export const Controls: React.FC = () => {
               <CheckCircle2 className="mr-2 h-5 w-5 text-green-600" />
               <div>
                 <h4 className="text-sm font-medium text-green-800">
-                  {exportSettings.format === "h264" ? "Video" : "GIF"} exported
-                  successfully!
+                  {exportSettings.format === "h264"
+                    ? "Video"
+                    : exportSettings.format === "gif"
+                      ? "GIF"
+                      : "QuickTime Video"}{" "}
+                  exported successfully!
                 </h4>
                 <div className="mt-2 text-sm text-green-700">
                   <p>
@@ -116,7 +120,11 @@ export const Controls: React.FC = () => {
                   </p>
                   <p className="mt-1">
                     The{" "}
-                    {exportSettings.format === "h264" ? "video" : "GIF file"}{" "}
+                    {exportSettings.format === "h264"
+                      ? "video"
+                      : exportSettings.format === "gif"
+                        ? "GIF file"
+                        : "QuickTime video"}{" "}
                     has been downloaded to your Downloads folder.
                   </p>
                 </div>
@@ -267,8 +275,8 @@ export const Controls: React.FC = () => {
                 Format
               </label>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              {(["h264", "gif"] as const).map((format) => (
+            <div className="grid grid-cols-3 gap-2">
+              {(["h264", "gif", "prores"] as const).map((format) => (
                 <Button
                   key={format}
                   variant={
@@ -282,7 +290,11 @@ export const Controls: React.FC = () => {
                       : "border-gray-300 text-gray-700 hover:bg-gray-50"
                   }
                 >
-                  {format === "h264" ? "MP4" : "GIF"}
+                  {format === "h264"
+                    ? "MP4"
+                    : format === "gif"
+                      ? "GIF"
+                      : "QuickTime"}
                 </Button>
               ))}
             </div>
@@ -290,6 +302,12 @@ export const Controls: React.FC = () => {
               <p className="mt-2 text-xs text-green-600">
                 ✨ Creates animated GIF with all images cycling at your chosen
                 duration
+              </p>
+            )}
+            {exportSettings.format === "prores" && (
+              <p className="mt-2 text-xs text-purple-600">
+                🎬 Native QuickTime export with ProRes-quality bitrates (45-220
+                Mbps)
               </p>
             )}
           </div>
@@ -328,14 +346,21 @@ export const Controls: React.FC = () => {
                   Ready to export {images.length} images as a{" "}
                   {exportSettings.format === "h264"
                     ? `${totalDuration.toFixed(1)}s video`
-                    : `${totalDuration.toFixed(1)}s animated GIF (${images.length} frames)`}{" "}
+                    : exportSettings.format === "gif"
+                      ? `${totalDuration.toFixed(1)}s animated GIF (${images.length} frames)`
+                      : `${totalDuration.toFixed(1)}s QuickTime video`}{" "}
                   ({imageDuration}s per image)
                 </p>
                 <p className="text-xs text-green-700 mt-1">
                   Output: {Math.round(1920 * exportSettings.scale)}×
                   {Math.round(1080 * exportSettings.scale)} •{" "}
                   {exportSettings.quality.toUpperCase()} quality •{" "}
-                  {exportSettings.format === "h264" ? "MP4" : "GIF"} format
+                  {exportSettings.format === "h264"
+                    ? "MP4"
+                    : exportSettings.format === "gif"
+                      ? "GIF"
+                      : "QuickTime"}{" "}
+                  format
                 </p>
               </div>
             ) : (
@@ -354,7 +379,9 @@ export const Controls: React.FC = () => {
                     Creating{" "}
                     {exportSettings.format === "h264"
                       ? "video"
-                      : "animated GIF"}
+                      : exportSettings.format === "gif"
+                        ? "animated GIF"
+                        : "QuickTime video"}
                     ...
                   </span>
                   <span className="text-gray-900">
@@ -377,7 +404,11 @@ export const Controls: React.FC = () => {
                 variant="outline"
                 className="border-blue-200 bg-blue-50 text-blue-700"
               >
-                {exportSettings.format === "h264" ? "MP4" : "GIF"}
+                {exportSettings.format === "h264"
+                  ? "MP4"
+                  : exportSettings.format === "gif"
+                    ? "GIF"
+                    : "QuickTime"}
               </Badge>
               <Badge
                 variant="outline"
@@ -404,13 +435,22 @@ export const Controls: React.FC = () => {
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Creating{" "}
-                  {exportSettings.format === "h264" ? "video" : "animated GIF"}
+                  {exportSettings.format === "h264"
+                    ? "video"
+                    : exportSettings.format === "gif"
+                      ? "animated GIF"
+                      : "QuickTime video"}
                   ...
                 </>
               ) : (
                 <>
                   <Download className="mr-2 h-4 w-4" />
-                  Export to {exportSettings.format === "h264" ? "MP4" : "GIF"}
+                  Export to{" "}
+                  {exportSettings.format === "h264"
+                    ? "MP4"
+                    : exportSettings.format === "gif"
+                      ? "GIF"
+                      : "QuickTime"}
                 </>
               )}
             </Button>
