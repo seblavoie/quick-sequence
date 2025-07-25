@@ -1,4 +1,4 @@
-# Quick Stitch - Image Sequence to Featherweight Videos
+# Quick Sequence - Image Sequences to Featherweight Videos
 
 Transform image sequences into MP4 or QuickTime ProRes video files locally in your browser with minimal necessary fps for dramatically small file sizes.
 
@@ -14,7 +14,7 @@ Transform image sequences into MP4 or QuickTime ProRes video files locally in yo
 ```bash
 # Clone and install
 git clone <your-repo-url>
-cd quick-stitch
+cd quick-sequence
 pnpm install
 
 # Start developing
