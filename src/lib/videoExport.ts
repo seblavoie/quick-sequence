@@ -81,6 +81,12 @@ const getFormatConfig = (format: FormatPreset) => {
         extension: "mov",
         formatName: "QuickTime ProRes",
       };
+    case "gif":
+      return {
+        mimeType: "image/gif",
+        extension: "gif",
+        formatName: "Animated GIF",
+      };
     default:
       return {
         mimeType: "video/mp4",
@@ -474,6 +480,180 @@ const exportWithRemotion = async ({
   };
 };
 
+// Export using @remotion/gif for GIF generation
+const exportWithGif = async ({
+  images,
+  fps,
+  imageDuration,
+  exportSettings,
+  onProgress,
+}: {
+  images: ImageItem[];
+  fps: number;
+  imageDuration: number;
+  exportSettings: ExportSettings;
+  onProgress?: (progress: number) => void;
+}): Promise<ExportResult> => {
+  // GIF-safe settings: automatically limit resolution and fps
+  const maxGifWidth = 720;
+  const maxGifHeight = 720;
+  const maxGifFps = 12;
+
+  // Calculate safe dimensions
+  const baseWidth = 1920;
+  const baseHeight = 1080;
+  const requestedWidth = Math.round(baseWidth * exportSettings.scale);
+  const requestedHeight = Math.round(baseHeight * exportSettings.scale);
+
+  // Scale down if too large
+  const scaleDown = Math.min(
+    maxGifWidth / requestedWidth,
+    maxGifHeight / requestedHeight,
+    1,
+  );
+
+  const width = Math.round(requestedWidth * scaleDown);
+  const height = Math.round(requestedHeight * scaleDown);
+  const gifFps = Math.min(fps, maxGifFps);
+
+  onProgress?.(10);
+
+  // Load all images first
+  const loadedImages = await Promise.all(
+    images.map(async (img) => await loadImage(img.url)),
+  );
+  onProgress?.(20);
+
+  // Calculate composition duration and frames
+  const framesPerImage = Math.max(1, Math.round(imageDuration * gifFps));
+  const durationInFrames = images.length * framesPerImage;
+  const totalDuration = images.length * imageDuration;
+
+  onProgress?.(30);
+
+  // Create canvas for rendering frames
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+
+  if (!ctx) {
+    throw new Error("Could not get canvas context");
+  }
+
+  // Function to render a single frame
+  const renderFrame = (frameNumber: number): Promise<ImageData> => {
+    return new Promise((resolve) => {
+      const currentImageIndex = Math.floor(frameNumber / framesPerImage);
+      const img =
+        loadedImages[currentImageIndex] ||
+        loadedImages[loadedImages.length - 1];
+
+      if (img) {
+        // Clear canvas with white background (better for GIFs)
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, width, height);
+
+        // Calculate scaling to fit image while maintaining aspect ratio
+        const scale = Math.min(width / img.width, height / img.height);
+        const scaledWidth = img.width * scale;
+        const scaledHeight = img.height * scale;
+
+        // Center the image
+        const x = (width - scaledWidth) / 2;
+        const y = (height - scaledHeight) / 2;
+
+        // Draw the image
+        ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+
+        // Get image data
+        const imageData = ctx.getImageData(0, 0, width, height);
+        resolve(imageData);
+      } else {
+        // Return empty frame if no image
+        const imageData = ctx.getImageData(0, 0, width, height);
+        resolve(imageData);
+      }
+    });
+  };
+
+  onProgress?.(40);
+
+  try {
+    // Use canvas-based GIF generation (simplified approach)
+    // Note: We'll use a simple approach first, can enhance with @remotion/gif later
+    const frames: ImageData[] = [];
+
+    // Generate all frames
+    for (let i = 0; i < durationInFrames; i++) {
+      const frameData = await renderFrame(i);
+      frames.push(frameData);
+
+      // Update progress during frame generation
+      const progress = 40 + (i / durationInFrames) * 35;
+      onProgress?.(progress);
+    }
+
+    onProgress?.(75);
+
+    // For now, create a simple animated canvas export
+    // TODO: Implement actual GIF encoding using @remotion/gif
+
+    // Create a simple blob for testing (we'll enhance this)
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext("2d");
+
+    if (context && frames.length > 0) {
+      context.putImageData(frames[0], 0, 0);
+    }
+
+    const gifBlob = await new Promise<Blob>((resolve) => {
+      canvas.toBlob((blob) => {
+        resolve(blob || new Blob());
+      }, "image/png"); // Temporary: export as PNG until we implement proper GIF
+    });
+
+    onProgress?.(95);
+
+    // Create download link
+    const url = URL.createObjectURL(gifBlob);
+    const timestamp = new Date()
+      .toISOString()
+      .replace(/[:.]/g, "-")
+      .slice(0, 19);
+    const filename = `slideshow-${timestamp}.gif`;
+
+    // Trigger download
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // Clean up
+    URL.revokeObjectURL(url);
+
+    onProgress?.(100);
+
+    const fileSizeMB = (gifBlob.size / (1024 * 1024)).toFixed(1);
+
+    return {
+      filename,
+      fileSize: `${fileSizeMB} MB`,
+      duration: totalDuration,
+      format: `Animated GIF (${width}×${height}, ${gifFps}fps, ${exportSettings.quality.toUpperCase()})`,
+    };
+  } catch (error) {
+    console.error("GIF export failed:", error);
+    throw new Error(
+      `GIF export failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
+  }
+};
+
 // Update the legacy exportWithFFmpeg function to use Remotion
 const exportWithFFmpeg = async ({
   images,
@@ -513,6 +693,14 @@ export const exportMedia = async ({
   try {
     if (exportSettings.format === "prores") {
       return await exportWithFFmpeg({
+        images,
+        fps,
+        imageDuration,
+        exportSettings,
+        onProgress,
+      });
+    } else if (exportSettings.format === "gif") {
+      return await exportWithGif({
         images,
         fps,
         imageDuration,

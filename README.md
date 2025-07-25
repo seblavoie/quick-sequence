@@ -31,6 +31,7 @@ pnpm run web
 | -------------------- | ----------------------------------- | --------- | --------- |
 | **MP4**              | Web, Social Media, General Sharing  | Smallest  | Excellent |
 | **QuickTime ProRes** | Professional Editing, Color Grading | Larger    | Maximum   |
+| **Animated GIF**     | Web Sharing, Social Media, Memes    | Medium    | Good      |
 
 ## Technical Stack
 

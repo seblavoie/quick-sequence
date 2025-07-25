@@ -8,7 +8,7 @@ export interface ImageItem {
 }
 
 export type QualityPreset = "low" | "medium" | "full";
-export type FormatPreset = "h264" | "prores";
+export type FormatPreset = "h264" | "prores" | "gif";
 
 export interface ExportSettings {
   quality: QualityPreset;

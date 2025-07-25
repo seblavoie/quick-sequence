@@ -226,8 +226,8 @@ export const Controls: React.FC = () => {
                 Format
               </label>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              {(["h264", "prores"] as const).map((format) => (
+            <div className="grid grid-cols-3 gap-2">
+              {(["h264", "prores", "gif"] as const).map((format) => (
                 <Button
                   key={format}
                   variant={
@@ -241,7 +241,11 @@ export const Controls: React.FC = () => {
                       : "border-gray-300 text-gray-700 hover:bg-gray-50"
                   }
                 >
-                  {format === "h264" ? "MP4" : "QuickTime"}
+                  {format === "h264"
+                    ? "MP4"
+                    : format === "prores"
+                      ? "QuickTime"
+                      : "GIF"}
                 </Button>
               ))}
             </div>
@@ -255,12 +259,22 @@ export const Controls: React.FC = () => {
                 QuickTime ProRes 422 HQ: Larger files, better quality
               </p>
             )}
+            {exportSettings.format === "gif" && (
+              <p className="mt-2 text-xs text-orange-600">
+                GIF: Auto-limited to 720p @ 12fps for browser safety
+              </p>
+            )}
           </div>
 
           {/* Scale Control */}
           <div>
             <div className="mb-2">
               <label className="text-sm font-medium text-gray-900">Scale</label>
+              {exportSettings.format === "gif" && (
+                <span className="ml-2 text-xs text-gray-500">
+                  (Auto-limited for GIF)
+                </span>
+              )}
             </div>
             <div className="grid grid-cols-4 gap-2">
               {[0.25, 0.5, 0.75, 1.0].map((scale) => (
@@ -271,16 +285,25 @@ export const Controls: React.FC = () => {
                   }
                   size="sm"
                   onClick={() => setExportSettings({ scale })}
+                  disabled={exportSettings.format === "gif"}
                   className={
                     exportSettings.scale === scale
                       ? "bg-blue-600 hover:bg-blue-700"
-                      : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                      : exportSettings.format === "gif"
+                        ? "border-gray-200 text-gray-400 cursor-not-allowed"
+                        : "border-gray-300 text-gray-700 hover:bg-gray-50"
                   }
                 >
                   {Math.round(scale * 100)}%
                 </Button>
               ))}
             </div>
+            {exportSettings.format === "gif" && (
+              <p className="mt-2 text-xs text-gray-500">
+                GIF output is automatically optimized to 720p max for browser
+                compatibility
+              </p>
+            )}
           </div>
 
           {/* Export Status and Button */}
@@ -293,7 +316,9 @@ export const Controls: React.FC = () => {
                     Creating{" "}
                     {exportSettings.format === "h264"
                       ? "video"
-                      : "QuickTime video"}
+                      : exportSettings.format === "prores"
+                        ? "QuickTime video"
+                        : "GIF"}
                     ...
                   </span>
                   <span className="text-gray-900">
@@ -316,7 +341,11 @@ export const Controls: React.FC = () => {
                 variant="outline"
                 className="border-blue-200 bg-blue-50 text-blue-700"
               >
-                {exportSettings.format === "h264" ? "MP4" : "QuickTime"}
+                {exportSettings.format === "h264"
+                  ? "MP4"
+                  : exportSettings.format === "prores"
+                    ? "QuickTime"
+                    : "GIF"}
               </Badge>
               <Badge
                 variant="outline"
@@ -345,14 +374,20 @@ export const Controls: React.FC = () => {
                   Creating{" "}
                   {exportSettings.format === "h264"
                     ? "video"
-                    : "QuickTime video"}
+                    : exportSettings.format === "prores"
+                      ? "QuickTime video"
+                      : "GIF"}
                   ...
                 </>
               ) : (
                 <>
                   <Download className="mr-2 h-4 w-4" />
                   Export to{" "}
-                  {exportSettings.format === "h264" ? "MP4" : "QuickTime"}
+                  {exportSettings.format === "h264"
+                    ? "MP4"
+                    : exportSettings.format === "prores"
+                      ? "QuickTime"
+                      : "GIF"}
                 </>
               )}
             </Button>
