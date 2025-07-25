@@ -9,7 +9,7 @@ export const App: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <div className="container mx-auto px-4 py-8">
         <header className="mb-12 text-center py-16">
-          <h1 className="text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-gray-900 via-indigo-900 to-purple-900 bg-clip-text text-transparent mb-4">
+          <h1 className="text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-blue-900 via-blue-700 to-indigo-600 bg-clip-text text-transparent mb-4">
             Quick Stitch
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">

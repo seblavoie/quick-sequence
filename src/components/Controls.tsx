@@ -1,4 +1,4 @@
-import { CheckCircle2, Download, Loader2, Settings, X } from "lucide-react";
+import { Download, Loader2, Settings, X } from "lucide-react";
 import React, { useState } from "react";
 import { exportMedia } from "../lib/videoExport";
 import { useImageStore } from "../store/useImageStore";
@@ -90,54 +90,6 @@ export const Controls: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Export Success Message */}
-      {exportSuccess && (
-        <div className="rounded-lg border border-green-200 bg-green-50 p-4">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center">
-              <CheckCircle2 className="mr-2 h-5 w-5 text-green-600" />
-              <div>
-                <h4 className="text-sm font-medium text-green-800">
-                  {exportSettings.format === "h264"
-                    ? "Video"
-                    : "QuickTime Video"}{" "}
-                  exported successfully!
-                </h4>
-                <div className="mt-2 text-sm text-green-700">
-                  <p>
-                    <strong>File:</strong> {exportSuccess.filename}
-                  </p>
-                  <p>
-                    <strong>Size:</strong> {exportSuccess.fileSize}
-                  </p>
-                  <p>
-                    <strong>Duration:</strong> {exportSuccess.duration}s
-                  </p>
-                  <p>
-                    <strong>Format:</strong> {exportSuccess.format}
-                  </p>
-                  <p className="mt-1">
-                    The{" "}
-                    {exportSettings.format === "h264"
-                      ? "video"
-                      : "QuickTime video"}{" "}
-                    has been downloaded to your Downloads folder.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={clearExportSuccess}
-              className="text-green-600 hover:text-green-800"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
-
       {/* Settings Card */}
       <Card className="border-gray-200">
         <CardHeader className="pb-4">
@@ -293,10 +245,14 @@ export const Controls: React.FC = () => {
                 </Button>
               ))}
             </div>
+            {exportSettings.format === "h264" && (
+              <p className="mt-2 text-xs text-blue-600">
+                H.264: Smaller files, good quality
+              </p>
+            )}
             {exportSettings.format === "prores" && (
-              <p className="mt-2 text-xs text-purple-600">
-                🎬 Native QuickTime export with ProRes-quality bitrates (45-220
-                Mbps)
+              <p className="mt-2 text-xs text-blue-600">
+                QuickTime ProRes 422 HQ: Larger files, better quality
               </p>
             )}
           </div>
@@ -329,35 +285,6 @@ export const Controls: React.FC = () => {
 
           {/* Export Status and Button */}
           <div>
-            {images.length > 0 ? (
-              <div className="mb-4 rounded-lg border border-green-200 bg-green-50 p-3">
-                <p className="text-sm text-green-800">
-                  Ready to export {images.length} images as a{" "}
-                  {exportSettings.format === "h264"
-                    ? `${totalDuration.toFixed(1)}s video`
-                    : `${totalDuration.toFixed(1)}s QuickTime video`}{" "}
-                  (
-                  {imageDuration < 0.1
-                    ? imageDuration.toFixed(3)
-                    : imageDuration.toFixed(1)}
-                  s per image)
-                </p>
-                <p className="text-xs text-green-700 mt-1">
-                  Output: {Math.round(1920 * exportSettings.scale)}×
-                  {Math.round(1080 * exportSettings.scale)} •{" "}
-                  {exportSettings.quality.toUpperCase()} quality •{" "}
-                  {exportSettings.format === "h264" ? "MP4" : "QuickTime"}{" "}
-                  format
-                </p>
-              </div>
-            ) : (
-              <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
-                <p className="text-sm text-gray-600">
-                  Add images to enable export
-                </p>
-              </div>
-            )}
-
             {/* Export Progress */}
             {isExporting && (
               <div className="mb-4">
@@ -432,6 +359,49 @@ export const Controls: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Export Success Message */}
+      {exportSuccess && (
+        <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+          <div className="flex items-start justify-between">
+            <div>
+              <h4 className="text-sm font-medium text-green-800">
+                {exportSettings.format === "h264" ? "Video" : "QuickTime Video"}{" "}
+                exported successfully!
+              </h4>
+              <div className="mt-2 text-sm text-green-700">
+                <p>
+                  <strong>File:</strong> {exportSuccess.filename}
+                </p>
+                <p>
+                  <strong>Size:</strong> {exportSuccess.fileSize}
+                </p>
+                <p>
+                  <strong>Duration:</strong> {exportSuccess.duration}s
+                </p>
+                <p>
+                  <strong>Format:</strong> {exportSuccess.format}
+                </p>
+                <p className="mt-1">
+                  The{" "}
+                  {exportSettings.format === "h264"
+                    ? "video"
+                    : "QuickTime video"}{" "}
+                  has been downloaded to your Downloads folder.
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearExportSuccess}
+              className="text-green-600 hover:text-green-800"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

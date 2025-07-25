@@ -14,7 +14,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Check, GripVertical, Image as ImageIcon, Trash2 } from "lucide-react";
+import { GripVertical, Image as ImageIcon, Trash2 } from "lucide-react";
 import React from "react";
 import { cn } from "../lib/utils";
 import { ImageItem, useImageStore } from "../store/useImageStore";
@@ -166,26 +166,6 @@ export const ImageList: React.FC = () => {
           ))}
         </SortableContext>
       </DndContext>
-
-      {/* Summary */}
-      {images.length > 0 && (
-        <div className="rounded-lg border border-green-200 bg-green-50 p-4">
-          <div className="flex items-center">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
-              <Check className="h-4 w-4 text-green-600" />
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-green-800">
-                Sequence ready
-              </p>
-              <p className="text-sm text-green-700">
-                {images.length} {images.length === 1 ? "image" : "images"}{" "}
-                arranged in the correct order
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
