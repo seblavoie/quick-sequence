@@ -1,4 +1,3 @@
-import GIF from "gif.js";
 import {
   ExportSettings,
   FormatPreset,
@@ -64,15 +63,7 @@ const getQualityConfig = (quality: QualityPreset, format: FormatPreset) => {
     full: { videoBitrate: 12000000, crf: 15 },
   };
 
-  const config = baseConfig[quality] || baseConfig.medium;
-
-  // Adjust for format
-  if (format === "gif") {
-    // GIFs don't use bitrate in the same way
-    return { ...config, gifQuality: quality };
-  }
-
-  return config;
+  return baseConfig[quality] || baseConfig.full;
 };
 
 // Helper function to get codec and extension for format
@@ -83,12 +74,6 @@ const getFormatConfig = (format: FormatPreset) => {
         mimeType: "video/mp4",
         extension: "mp4",
         formatName: "H.264 MP4",
-      };
-    case "gif":
-      return {
-        mimeType: "image/gif",
-        extension: "gif",
-        formatName: "Animated GIF",
       };
     case "prores":
       return {
@@ -103,67 +88,6 @@ const getFormatConfig = (format: FormatPreset) => {
         formatName: "H.264 MP4",
       };
   }
-};
-
-// Function to get the best supported video format for MediaRecorder
-const getBestVideoFormat = (
-  preferredMimeType: string,
-): {
-  mimeType: string;
-  extension: string;
-  formatName: string;
-} => {
-  // Check if preferred format is supported
-  if (MediaRecorder.isTypeSupported(preferredMimeType)) {
-    const formatConfig = getFormatConfig(
-      preferredMimeType.includes("mp4") ? "h264" : "gif",
-    );
-    return {
-      mimeType: preferredMimeType,
-      extension: formatConfig.extension,
-      formatName: formatConfig.formatName,
-    };
-  }
-
-  // H.264 options (preferred)
-  const h264Options = [
-    "video/mp4;codecs=avc1.42E01E", // H.264 Baseline
-    "video/mp4;codecs=avc1.64001E", // H.264 High Profile
-    "video/mp4;codecs=h264", // Generic H.264
-    "video/mp4", // Generic MP4
-  ];
-
-  // Check for H.264 support
-  for (const mimeType of h264Options) {
-    if (MediaRecorder.isTypeSupported(mimeType)) {
-      return {
-        mimeType,
-        extension: "mp4",
-        formatName: "H.264 MP4",
-      };
-    }
-  }
-
-  // Fallback to WebM
-  const webmOptions = [
-    "video/webm;codecs=vp9",
-    "video/webm;codecs=vp8",
-    "video/webm",
-  ];
-
-  for (const mimeType of webmOptions) {
-    if (MediaRecorder.isTypeSupported(mimeType)) {
-      return {
-        mimeType,
-        extension: "webm",
-        formatName: "WebM",
-      };
-    }
-  }
-
-  throw new Error(
-    "No supported video format found. Please use Chrome, Firefox, or Edge.",
-  );
 };
 
 // Export using MediaRecorder (for MP4 and WebM)
@@ -209,7 +133,7 @@ const exportWithMediaRecorder = async ({
   }
 
   // Get the best supported video format
-  const videoFormat = getBestVideoFormat(formatConfig.mimeType);
+  const videoFormat = formatConfig;
 
   // Set up MediaRecorder
   const stream = canvas.captureStream(fps);
@@ -309,135 +233,6 @@ const exportWithMediaRecorder = async ({
     fileSize: `${fileSizeMB} MB`,
     duration: totalDuration,
     format: `${videoFormat.formatName} (${width}×${height}, ${exportSettings.quality.toUpperCase()})`,
-  };
-};
-
-// Export as animated GIF using gif.js
-const exportAsGif = async ({
-  images,
-  fps,
-  imageDuration,
-  exportSettings,
-  onProgress,
-}: {
-  images: ImageItem[];
-  fps: number;
-  imageDuration: number;
-  exportSettings: ExportSettings;
-  onProgress?: (progress: number) => void;
-}): Promise<ExportResult> => {
-  const baseWidth = 1920;
-  const baseHeight = 1080;
-  const width = Math.round(baseWidth * exportSettings.scale);
-  const height = Math.round(baseHeight * exportSettings.scale);
-
-  // Load all images first
-  onProgress?.(10);
-  const loadedImages = await Promise.all(
-    images.map(async (img) => await loadImage(img.url)),
-  );
-  onProgress?.(20);
-
-  // Configure GIF quality based on preset
-  const getGifQuality = (quality: QualityPreset) => {
-    switch (quality) {
-      case "low":
-        return 20; // Lower quality, smaller file
-      case "medium":
-        return 10; // Medium quality
-      case "full":
-        return 1; // Highest quality
-      default:
-        return 10;
-    }
-  };
-
-  // Create GIF instance
-  const gif = new GIF({
-    workers: 2,
-    quality: getGifQuality(exportSettings.quality),
-    width,
-    height,
-    workerScript: "/gif.worker.js", // Worker script in public folder
-  });
-
-  // Create canvas for rendering frames
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext("2d");
-
-  if (!ctx || loadedImages.length === 0) {
-    throw new Error("Could not create GIF");
-  }
-
-  onProgress?.(30);
-
-  // Convert imageDuration from seconds to milliseconds for GIF delay
-  const frameDelayMs = Math.round(imageDuration * 1000);
-
-  // Add each image as a frame to the GIF
-  for (let i = 0; i < loadedImages.length; i++) {
-    const img = loadedImages[i];
-
-    // Clear and draw the image on canvas
-    drawImageCentered(ctx, img, width, height);
-
-    // Add frame to GIF with delay
-    gif.addFrame(canvas, {
-      delay: frameDelayMs,
-      copy: true, // Important: copy the canvas data
-    });
-
-    // Update progress
-    const frameProgress = 30 + ((i + 1) / loadedImages.length) * 40; // 30% to 70%
-    onProgress?.(frameProgress);
-  }
-
-  onProgress?.(70);
-
-  // Render the GIF
-  const gifBlob = await new Promise<Blob>((resolve, reject) => {
-    gif.on("finished", (blob: Blob) => {
-      resolve(blob);
-    });
-
-    gif.on("progress", (progress: number) => {
-      // Map gif.js progress (0-1) to our progress range (70% to 95%)
-      const mappedProgress = 70 + progress * 25;
-      onProgress?.(mappedProgress);
-    });
-
-    gif.render();
-  });
-
-  onProgress?.(95);
-
-  // Create download
-  const url = URL.createObjectURL(gifBlob);
-  const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-  const filename = `slideshow-${timestamp}.gif`;
-
-  // Trigger download
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-
-  // Clean up
-  URL.revokeObjectURL(url);
-  onProgress?.(100);
-
-  const totalDuration = images.length * imageDuration;
-  const fileSizeMB = (gifBlob.size / (1024 * 1024)).toFixed(1);
-
-  return {
-    filename,
-    fileSize: `${fileSizeMB} MB`,
-    duration: totalDuration,
-    format: `Animated GIF (${width}×${height}, ${exportSettings.quality.toUpperCase()}, ${images.length} frames)`,
   };
 };
 
@@ -708,7 +503,7 @@ export const exportMedia = async ({
   images,
   fps,
   imageDuration = 1.0,
-  exportSettings = { quality: "medium", scale: 1.0, format: "h264" },
+  exportSettings = { quality: "full", scale: 1.0, format: "h264" },
   onProgress,
 }: ExportOptions): Promise<ExportResult> => {
   if (images.length === 0) {
@@ -716,15 +511,7 @@ export const exportMedia = async ({
   }
 
   try {
-    if (exportSettings.format === "gif") {
-      return await exportAsGif({
-        images,
-        fps,
-        imageDuration,
-        exportSettings,
-        onProgress,
-      });
-    } else if (exportSettings.format === "prores") {
+    if (exportSettings.format === "prores") {
       return await exportWithFFmpeg({
         images,
         fps,
@@ -733,6 +520,7 @@ export const exportMedia = async ({
         onProgress,
       });
     } else {
+      // Default to H.264 MP4 export
       return await exportWithMediaRecorder({
         images,
         fps,

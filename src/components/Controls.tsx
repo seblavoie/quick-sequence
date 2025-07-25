@@ -37,7 +37,7 @@ export const Controls: React.FC = () => {
 
   const handleDurationSave = () => {
     const value = parseFloat(tempDuration);
-    if (!isNaN(value) && value >= 0.1 && value <= 5.0) {
+    if (!isNaN(value) && value >= 1 / 60 && value <= 5.0) {
       setImageDuration(value);
     } else {
       setTempDuration(imageDuration.toString());
@@ -100,9 +100,7 @@ export const Controls: React.FC = () => {
                 <h4 className="text-sm font-medium text-green-800">
                   {exportSettings.format === "h264"
                     ? "Video"
-                    : exportSettings.format === "gif"
-                      ? "GIF"
-                      : "QuickTime Video"}{" "}
+                    : "QuickTime Video"}{" "}
                   exported successfully!
                 </h4>
                 <div className="mt-2 text-sm text-green-700">
@@ -122,9 +120,7 @@ export const Controls: React.FC = () => {
                     The{" "}
                     {exportSettings.format === "h264"
                       ? "video"
-                      : exportSettings.format === "gif"
-                        ? "GIF file"
-                        : "QuickTime video"}{" "}
+                      : "QuickTime video"}{" "}
                     has been downloaded to your Downloads folder.
                   </p>
                 </div>
@@ -165,9 +161,9 @@ export const Controls: React.FC = () => {
                     onChange={(e) => setTempDuration(e.target.value)}
                     onBlur={handleDurationSave}
                     onKeyDown={handleDurationKeyPress}
-                    min={0.1}
+                    min={1 / 60}
                     max={5.0}
-                    step={0.1}
+                    step={0.01}
                     autoFocus
                     className="w-16 rounded-md border border-indigo-500 px-2 py-1 text-xs text-center focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   />
@@ -177,7 +173,10 @@ export const Controls: React.FC = () => {
                     className="border-gray-200 bg-gray-50 text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
                     onClick={handleDurationEdit}
                   >
-                    {imageDuration}s
+                    {imageDuration < 0.1
+                      ? imageDuration.toFixed(3)
+                      : imageDuration.toFixed(1)}
+                    s
                   </Badge>
                 )}
                 <Badge
@@ -191,13 +190,13 @@ export const Controls: React.FC = () => {
             <Slider
               value={[imageDuration]}
               onValueChange={([value]) => setImageDuration(value)}
-              min={0.1}
+              min={1 / 60}
               max={5.0}
-              step={0.1}
+              step={0.01}
               className="w-full"
             />
             <div className="mt-2 flex justify-between text-xs text-gray-500">
-              <span>0.1s (fast)</span>
+              <span>1/60s (ultra-fast)</span>
               <span>5.0s (slow)</span>
             </div>
           </div>
@@ -275,8 +274,8 @@ export const Controls: React.FC = () => {
                 Format
               </label>
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              {(["h264", "gif", "prores"] as const).map((format) => (
+            <div className="grid grid-cols-2 gap-2">
+              {(["h264", "prores"] as const).map((format) => (
                 <Button
                   key={format}
                   variant={
@@ -290,20 +289,10 @@ export const Controls: React.FC = () => {
                       : "border-gray-300 text-gray-700 hover:bg-gray-50"
                   }
                 >
-                  {format === "h264"
-                    ? "MP4"
-                    : format === "gif"
-                      ? "GIF"
-                      : "QuickTime"}
+                  {format === "h264" ? "MP4" : "QuickTime"}
                 </Button>
               ))}
             </div>
-            {exportSettings.format === "gif" && (
-              <p className="mt-2 text-xs text-green-600">
-                ✨ Creates animated GIF with all images cycling at your chosen
-                duration
-              </p>
-            )}
             {exportSettings.format === "prores" && (
               <p className="mt-2 text-xs text-purple-600">
                 🎬 Native QuickTime export with ProRes-quality bitrates (45-220
@@ -346,20 +335,18 @@ export const Controls: React.FC = () => {
                   Ready to export {images.length} images as a{" "}
                   {exportSettings.format === "h264"
                     ? `${totalDuration.toFixed(1)}s video`
-                    : exportSettings.format === "gif"
-                      ? `${totalDuration.toFixed(1)}s animated GIF (${images.length} frames)`
-                      : `${totalDuration.toFixed(1)}s QuickTime video`}{" "}
-                  ({imageDuration}s per image)
+                    : `${totalDuration.toFixed(1)}s QuickTime video`}{" "}
+                  (
+                  {imageDuration < 0.1
+                    ? imageDuration.toFixed(3)
+                    : imageDuration.toFixed(1)}
+                  s per image)
                 </p>
                 <p className="text-xs text-green-700 mt-1">
                   Output: {Math.round(1920 * exportSettings.scale)}×
                   {Math.round(1080 * exportSettings.scale)} •{" "}
                   {exportSettings.quality.toUpperCase()} quality •{" "}
-                  {exportSettings.format === "h264"
-                    ? "MP4"
-                    : exportSettings.format === "gif"
-                      ? "GIF"
-                      : "QuickTime"}{" "}
+                  {exportSettings.format === "h264" ? "MP4" : "QuickTime"}{" "}
                   format
                 </p>
               </div>
@@ -379,9 +366,7 @@ export const Controls: React.FC = () => {
                     Creating{" "}
                     {exportSettings.format === "h264"
                       ? "video"
-                      : exportSettings.format === "gif"
-                        ? "animated GIF"
-                        : "QuickTime video"}
+                      : "QuickTime video"}
                     ...
                   </span>
                   <span className="text-gray-900">
@@ -404,11 +389,7 @@ export const Controls: React.FC = () => {
                 variant="outline"
                 className="border-blue-200 bg-blue-50 text-blue-700"
               >
-                {exportSettings.format === "h264"
-                  ? "MP4"
-                  : exportSettings.format === "gif"
-                    ? "GIF"
-                    : "QuickTime"}
+                {exportSettings.format === "h264" ? "MP4" : "QuickTime"}
               </Badge>
               <Badge
                 variant="outline"
@@ -437,20 +418,14 @@ export const Controls: React.FC = () => {
                   Creating{" "}
                   {exportSettings.format === "h264"
                     ? "video"
-                    : exportSettings.format === "gif"
-                      ? "animated GIF"
-                      : "QuickTime video"}
+                    : "QuickTime video"}
                   ...
                 </>
               ) : (
                 <>
                   <Download className="mr-2 h-4 w-4" />
                   Export to{" "}
-                  {exportSettings.format === "h264"
-                    ? "MP4"
-                    : exportSettings.format === "gif"
-                      ? "GIF"
-                      : "QuickTime"}
+                  {exportSettings.format === "h264" ? "MP4" : "QuickTime"}
                 </>
               )}
             </Button>
