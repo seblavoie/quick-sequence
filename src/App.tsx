@@ -13,7 +13,7 @@ export const App: React.FC = () => {
             Quick Stitch
           </h1>
           <p className="text-gray-600">
-            Create video slideshows from images with drag & drop simplicity
+            Drag, drop, stitch. Convert image sequences to videos, quick.
           </p>
         </header>
 
