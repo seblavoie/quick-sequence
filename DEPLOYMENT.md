@@ -29,7 +29,7 @@ The project is configured for static deployment with:
 - Image reordering and management
 - Real-time preview
 - MP4 video export (using MediaRecorder API)
-- Animated GIF export (using gif.js web worker)
+
 - All settings and controls
 
 ## Limitations
@@ -44,7 +44,6 @@ The project is configured for static deployment with:
 
 - **Large files**: Processing happens client-side, so performance depends on user's device
 - **Memory usage**: Large images or many images may require more RAM
-- **Export time**: GIF generation can be slow for long videos with many frames
 
 ## Troubleshooting
 
@@ -63,7 +62,7 @@ ls -la dist/
 The `_headers` file includes proper CORS configuration for:
 
 - MediaRecorder API
-- Web Worker (gif.js)
+
 - File downloads
 
 ### Performance Issues
