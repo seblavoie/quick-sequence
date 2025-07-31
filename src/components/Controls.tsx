@@ -289,7 +289,7 @@ export const Controls: React.FC = () => {
                 variant="outline"
                 className="border-blue-200 bg-blue-50 text-blue-700"
               >
-                {exportSettings.format === "h264" ? "MP4" : "QuickTime"}
+                MP4
               </Badge>
               <Badge
                 variant="outline"
@@ -315,17 +315,12 @@ export const Controls: React.FC = () => {
               {isExporting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating{" "}
-                  {exportSettings.format === "h264"
-                    ? "video"
-                    : "QuickTime video"}
-                  ...
+                  Creating video...
                 </>
               ) : (
                 <>
                   <Download className="mr-2 h-4 w-4" />
-                  Export to{" "}
-                  {exportSettings.format === "h264" ? "MP4" : "QuickTime"}
+                  Export to MP4
                 </>
               )}
             </Button>
@@ -339,8 +334,7 @@ export const Controls: React.FC = () => {
           <div className="flex items-start justify-between">
             <div>
               <h4 className="text-sm font-medium text-green-800">
-                {exportSettings.format === "h264" ? "Video" : "QuickTime Video"}{" "}
-                exported successfully!
+                Video exported successfully!
               </h4>
               <div className="mt-2 text-sm text-green-700">
                 <p>
@@ -356,11 +350,7 @@ export const Controls: React.FC = () => {
                   <strong>Format:</strong> {exportSuccess.format}
                 </p>
                 <p className="mt-1">
-                  The{" "}
-                  {exportSettings.format === "h264"
-                    ? "video"
-                    : "QuickTime video"}{" "}
-                  has been downloaded to your Downloads folder.
+                  The video has been downloaded to your Downloads folder.
                 </p>
               </div>
             </div>
