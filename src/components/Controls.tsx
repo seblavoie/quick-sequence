@@ -219,42 +219,21 @@ export const Controls: React.FC = () => {
             </div>
           </div>
 
-          {/* Format Control */}
+          {/* Quality Info */}
           <div>
             <div className="mb-2">
               <label className="text-sm font-medium text-gray-900">
-                Format
+                Export Quality
               </label>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              {(["h264", "prores"] as const).map((format) => (
-                <Button
-                  key={format}
-                  variant={
-                    exportSettings.format === format ? "default" : "outline"
-                  }
-                  size="sm"
-                  onClick={() => setExportSettings({ format })}
-                  className={
-                    exportSettings.format === format
-                      ? "bg-blue-600 hover:bg-blue-700"
-                      : "border-gray-300 text-gray-700 hover:bg-gray-50"
-                  }
-                >
-                  {format === "h264" ? "MP4" : "QuickTime"}
-                </Button>
-              ))}
-            </div>
-            {exportSettings.format === "h264" && (
-              <p className="mt-2 text-xs text-blue-600">
-                H.264: Smaller files, good quality
-              </p>
-            )}
-            {exportSettings.format === "prores" && (
-              <p className="mt-2 text-xs text-blue-600">
-                QuickTime ProRes 422 HQ: Larger files, better quality
-              </p>
-            )}
+            <p className="text-xs text-blue-600">
+              H.264 MP4:{" "}
+              {exportSettings.quality === "full"
+                ? "Ultra-high quality (50Mbps)"
+                : exportSettings.quality === "medium"
+                  ? "High quality (15Mbps)"
+                  : "Good quality (4Mbps)"}
+            </p>
           </div>
 
           {/* Scale Control */}
@@ -289,13 +268,7 @@ export const Controls: React.FC = () => {
             {isExporting && (
               <div className="mb-4">
                 <div className="mb-2 flex justify-between text-sm">
-                  <span className="text-gray-600">
-                    Creating{" "}
-                    {exportSettings.format === "h264"
-                      ? "video"
-                      : "QuickTime video"}
-                    ...
-                  </span>
+                  <span className="text-gray-600">Creating video...</span>
                   <span className="text-gray-900">
                     {Math.round(exportProgress)}%
                   </span>

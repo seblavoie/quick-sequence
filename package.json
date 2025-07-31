@@ -15,6 +15,7 @@
     "@radix-ui/react-slot": "^1.2.3",
     "@remotion/cli": "4.0.325",
     "@remotion/gif": "^4.0.325",
+    "@remotion/renderer": "^4.0.327",
     "@remotion/tailwind-v4": "4.0.325",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
