@@ -1,6 +1,5 @@
 import {
   ExportSettings,
-  FormatPreset,
   ImageItem,
   QualityPreset,
 } from "../store/useImageStore";
@@ -66,16 +65,60 @@ const getH264QualityConfig = (quality: QualityPreset) => {
   return baseConfig[quality] || baseConfig.full;
 };
 
-// Helper function to get codec and extension for format
-const getFormatConfig = (format: FormatPreset) => {
+// Check what codecs the browser supports
+const getSupportedCodec = () => {
+  const codecs = [
+    // H.264 codecs (preferred)
+    'video/mp4; codecs="avc1.42E01E"', // H.264 Baseline
+    'video/mp4; codecs="avc1.4D401E"', // H.264 Main
+    'video/mp4; codecs="avc1.64001E"', // H.264 High
+    'video/mp4; codecs="avc1.42E01F"', // H.264 Baseline (high bitrate)
+    'video/mp4; codecs="avc1.4D401F"', // H.264 Main (high bitrate)
+    'video/mp4; codecs="avc1.64001F"', // H.264 High (high bitrate)
+    // Fallback to generic MP4
+    "video/mp4",
+    // WebM VP9 (fallback)
+    'video/webm; codecs="vp9"',
+    "video/webm",
+  ];
+
+  for (const codec of codecs) {
+    if (MediaRecorder.isTypeSupported(codec)) {
+      return codec;
+    }
+  }
+
+  // If nothing is supported, return the first one and let the browser handle it
+  return "video/mp4";
+};
+
+// Get codec information for display
+export const getCodecInfo = () => {
+  const codec = getSupportedCodec();
+  const isWebM = codec.includes("webm");
+  const isH264 = codec.includes("avc1") || (codec === "video/mp4" && !isWebM);
+
   return {
-    mimeType: "video/mp4",
-    extension: "mp4",
-    formatName: "H.264 MP4",
+    codec,
+    format: isWebM ? "WebM" : "MP4",
+    encoding: isH264 ? "H.264" : isWebM ? "VP9" : "Auto",
+    extension: isWebM ? "webm" : "mp4",
   };
 };
 
-// Export using MediaRecorder (for H.264 MP4)
+// Helper function to get codec and extension for format
+const getFormatConfig = () => {
+  const mimeType = getSupportedCodec();
+  const isWebM = mimeType.includes("webm");
+
+  return {
+    mimeType,
+    extension: isWebM ? "webm" : "mp4",
+    formatName: isWebM ? "VP9 WebM" : "H.264 MP4",
+  };
+};
+
+// Export using MediaRecorder (for H.264 MP4 or VP9 WebM)
 const exportWithMediaRecorder = async ({
   images,
   fps,
@@ -95,7 +138,7 @@ const exportWithMediaRecorder = async ({
   const height = Math.round(baseHeight * exportSettings.scale);
 
   const qualityConfig = getH264QualityConfig(exportSettings.quality);
-  const formatConfig = getFormatConfig(exportSettings.format);
+  const formatConfig = getFormatConfig();
 
   // Load all images first
   onProgress?.(10);
@@ -114,7 +157,7 @@ const exportWithMediaRecorder = async ({
     throw new Error("Could not get canvas context");
   }
 
-  // Set up MediaRecorder
+  // Set up MediaRecorder with detected codec
   const stream = canvas.captureStream(fps);
   const mediaRecorder = new MediaRecorder(stream, {
     mimeType: formatConfig.mimeType,

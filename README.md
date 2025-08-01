@@ -9,6 +9,7 @@ Use it for free: quicksequence.com
 - **Featherweight exports**: The dynamic frame rate output renders no redundant frames and produces tiny files.
 - **Fast, local and private**: The export happens in your browser. The images are not sent or saved. No install or account necessary.
 - **Remotion-Powered**: Uses remotion and react for live previews and fast react-based rendering.
+- **Smart codec detection**: Automatically uses the best available codec (H.264 MP4 or VP9 WebM) for your browser.
 - **Adjustable format, encoding and scale**: Control your export settings to fine-tune your output.
 
 ## Development

@@ -1,6 +1,6 @@
 import { Download, Loader2, Settings, X } from "lucide-react";
 import React, { useState } from "react";
-import { exportMedia } from "../lib/videoExport";
+import { exportMedia, getCodecInfo } from "../lib/videoExport";
 import { useImageStore } from "../store/useImageStore";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -29,6 +29,7 @@ export const Controls: React.FC = () => {
   const [tempDuration, setTempDuration] = useState(imageDuration.toString());
 
   const fps = getFps();
+  const codecInfo = getCodecInfo();
 
   const handleDurationEdit = () => {
     setTempDuration(imageDuration.toString());
@@ -227,12 +228,14 @@ export const Controls: React.FC = () => {
               </label>
             </div>
             <p className="text-xs text-blue-600">
-              H.264 MP4:{" "}
               {exportSettings.quality === "full"
                 ? "Ultra-high quality (50Mbps)"
                 : exportSettings.quality === "medium"
                   ? "High quality (15Mbps)"
                   : "Good quality (4Mbps)"}
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              Codec: {codecInfo.encoding} {codecInfo.format}
             </p>
           </div>
 
@@ -289,7 +292,7 @@ export const Controls: React.FC = () => {
                 variant="outline"
                 className="border-blue-200 bg-blue-50 text-blue-700"
               >
-                MP4
+                {codecInfo.encoding}
               </Badge>
               <Badge
                 variant="outline"
@@ -320,7 +323,7 @@ export const Controls: React.FC = () => {
               ) : (
                 <>
                   <Download className="mr-2 h-4 w-4" />
-                  Export to MP4
+                  Export Video
                 </>
               )}
             </Button>
