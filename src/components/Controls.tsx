@@ -1,6 +1,10 @@
 import { Download, Loader2, Settings, X } from "lucide-react";
 import React, { useState } from "react";
-import { exportMedia, getCodecInfo } from "../lib/videoExport";
+import {
+  exportMedia,
+  getCodecInfo,
+  isWebCodecsSupported,
+} from "../lib/videoExport";
 import { useImageStore } from "../store/useImageStore";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -30,6 +34,7 @@ export const Controls: React.FC = () => {
 
   const fps = getFps();
   const codecInfo = getCodecInfo();
+  const webCodecsSupported = isWebCodecsSupported();
 
   const handleDurationEdit = () => {
     setTempDuration(imageDuration.toString());
@@ -229,13 +234,16 @@ export const Controls: React.FC = () => {
             </div>
             <p className="text-xs text-blue-600">
               {exportSettings.quality === "full"
-                ? "Ultra-high quality (50Mbps)"
+                ? "Ultra-high quality (100Mbps)"
                 : exportSettings.quality === "medium"
-                  ? "High quality (15Mbps)"
-                  : "Good quality (4Mbps)"}
+                  ? "High quality (25Mbps)"
+                  : "Good quality (8Mbps)"}
             </p>
             <p className="text-xs text-gray-500 mt-1">
               Codec: {codecInfo.encoding} {codecInfo.format}
+              {webCodecsSupported && (
+                <span className="ml-2 text-green-600">• WebCodecs ready</span>
+              )}
             </p>
           </div>
 

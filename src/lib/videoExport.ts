@@ -30,7 +30,7 @@ const loadImage = (url: string): Promise<HTMLImageElement> => {
   });
 };
 
-// Helper function to draw image centered and scaled to fit canvas
+// Helper function to draw image centered and scaled to fit canvas with high quality
 const drawImageCentered = (
   ctx: CanvasRenderingContext2D,
   img: HTMLImageElement,
@@ -47,19 +47,26 @@ const drawImageCentered = (
   const scaledHeight = img.height * scale;
 
   // Center the image
-  const x = (canvasWidth - scaledWidth) / 2;
-  const y = (canvasHeight - scaledHeight) / 2;
+  const x = Math.round((canvasWidth - scaledWidth) / 2);
+  const y = Math.round((canvasHeight - scaledHeight) / 2);
 
-  // Draw the image
+  // Use high quality rendering
+  ctx.save();
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+
+  // Draw the image with sub-pixel precision for better quality
   ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+
+  ctx.restore();
 };
 
 // Quality preset configurations for H.264
 const getH264QualityConfig = (quality: QualityPreset) => {
   const baseConfig = {
-    low: { videoBitrate: 4000000, crf: 25 }, // 4 Mbps, decent quality
-    medium: { videoBitrate: 15000000, crf: 18 }, // 15 Mbps, good quality
-    full: { videoBitrate: 50000000, crf: 10 }, // 50 Mbps, near-lossless quality
+    low: { videoBitrate: 8000000, crf: 25 }, // 8 Mbps, decent quality
+    medium: { videoBitrate: 25000000, crf: 18 }, // 25 Mbps, good quality
+    full: { videoBitrate: 100000000, crf: 10 }, // 100 Mbps, near-lossless quality
   };
 
   return baseConfig[quality] || baseConfig.full;
@@ -106,6 +113,32 @@ export const getCodecInfo = () => {
   };
 };
 
+// Check if WebCodecs API is available (for future high-quality encoding)
+export const isWebCodecsSupported = () => {
+  return (
+    typeof window !== "undefined" &&
+    "VideoEncoder" in window &&
+    "VideoFrame" in window
+  );
+};
+
+// Debug function to log quality settings
+export const logQualitySettings = (exportSettings: ExportSettings) => {
+  const qualityConfig = getH264QualityConfig(exportSettings.quality);
+  const adjustedBitrate = Math.round(
+    qualityConfig.videoBitrate * exportSettings.scale,
+  );
+
+  console.log("Quality Settings:", {
+    quality: exportSettings.quality,
+    scale: exportSettings.scale,
+    baseBitrate: qualityConfig.videoBitrate,
+    adjustedBitrate: adjustedBitrate,
+    codec: getSupportedCodec(),
+    webCodecsSupported: isWebCodecsSupported(),
+  });
+};
+
 // Helper function to get codec and extension for format
 const getFormatConfig = () => {
   const mimeType = getSupportedCodec();
@@ -140,6 +173,9 @@ const exportWithMediaRecorder = async ({
   const qualityConfig = getH264QualityConfig(exportSettings.quality);
   const formatConfig = getFormatConfig();
 
+  // Log quality settings for debugging
+  logQualitySettings(exportSettings);
+
   // Load all images first
   onProgress?.(10);
   const loadedImages = await Promise.all(
@@ -147,21 +183,34 @@ const exportWithMediaRecorder = async ({
   );
   onProgress?.(20);
 
-  // Create canvas
+  // Create canvas with high quality settings
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d", {
+    alpha: false, // Better performance and quality
+    willReadFrequently: false, // Optimize for rendering
+  });
 
   if (!ctx) {
     throw new Error("Could not get canvas context");
   }
 
-  // Set up MediaRecorder with detected codec
+  // Set high quality rendering
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+
+  // Set up MediaRecorder with detected codec and high quality settings
   const stream = canvas.captureStream(fps);
+
+  // Calculate adjusted bitrate based on scale and quality
+  const adjustedBitrate = Math.round(
+    qualityConfig.videoBitrate * exportSettings.scale,
+  );
+
   const mediaRecorder = new MediaRecorder(stream, {
     mimeType: formatConfig.mimeType,
-    videoBitsPerSecond: qualityConfig.videoBitrate * exportSettings.scale,
+    videoBitsPerSecond: adjustedBitrate,
   });
 
   const chunks: Blob[] = [];
