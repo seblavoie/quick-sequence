@@ -25,13 +25,6 @@ pnpm i
 pnpm run web
 ```
 
-## Export Formats
-
-| Format               | Best For                            | File Size | Quality   |
-| -------------------- | ----------------------------------- | --------- | --------- |
-| **MP4**              | Web, Social Media, General Sharing  | Smallest  | Excellent |
-| **QuickTime ProRes** | Professional Editing, Color Grading | Larger    | Maximum   |
-
 ## Technical Stack
 
 Built with modern web technologies for maximum performance:
