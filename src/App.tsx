@@ -16,9 +16,6 @@ export const App: React.FC = () => {
             <span className="block">
               Image sequences to featherweight videos.{" "}
             </span>
-            <span className="text-indigo-600 font-semibold">
-              Drag, drop, export.
-            </span>
           </p>
         </header>
 
