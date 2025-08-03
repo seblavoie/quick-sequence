@@ -14,7 +14,7 @@ export const App: React.FC = () => {
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
             <span className="block">
-              Image sequences to featherweight videos.{" "}
+              Transform image sequences into videos locally in your browser.{" "}
             </span>
           </p>
         </header>

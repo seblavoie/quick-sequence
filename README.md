@@ -1,6 +1,6 @@
 # Quick Sequence
 
-Transform image sequences into featherweight videos locally in your browser. Just add your images, set timings, choose an output formant, and export. That's it.
+Transform image sequences into videos locally in your browser. Just add your images, set timings, choose an output formant, and export. That's it.
 
 Use it for free: quicksequence.com
 
