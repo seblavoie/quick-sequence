@@ -29,6 +29,5 @@ pnpm run web
 
 Built with modern web technologies for maximum performance:
 
-- **Remotion** - Professional video composition framework
 - **React 19** - Latest React with optimized rendering
 - **Browser APIs** - Native video encoding without external dependencies
