@@ -234,16 +234,17 @@ const exportWithMediaRecorder = async ({
 
   // Calculate timing based on image duration and fps
   const frameInterval = 1000 / fps; // milliseconds per frame
-  const framesPerImage = Math.max(1, Math.round(imageDuration * fps)); // frames per image
-  const totalFrames = images.length * framesPerImage;
+  const expectedDuration = images.length * imageDuration; // Total duration in seconds
+  const totalFrames = Math.ceil(expectedDuration * fps); // Total frames needed
 
   let currentFrame = 0;
+  let startTime = Date.now();
 
   // Animation function
   const renderFrame = () => {
     return new Promise<void>((resolve) => {
-      // Determine which image to show based on frames
-      const imageIndex = Math.floor(currentFrame / framesPerImage);
+      const elapsedTime = (Date.now() - startTime) / 1000; // Time elapsed in seconds
+      const imageIndex = Math.floor(elapsedTime / imageDuration);
 
       if (imageIndex < loadedImages.length) {
         const img = loadedImages[imageIndex];
@@ -257,7 +258,7 @@ const exportWithMediaRecorder = async ({
       onProgress?.(progress);
 
       // Continue or finish
-      if (currentFrame < totalFrames) {
+      if (elapsedTime < expectedDuration) {
         setTimeout(() => {
           renderFrame().then(resolve);
         }, frameInterval);
