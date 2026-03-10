@@ -19,6 +19,23 @@ export interface ExportResult {
   format: string;
 }
 
+const BASE_WIDTH = 1920;
+const BASE_HEIGHT = 1080;
+const BASE_PIXELS = BASE_WIDTH * BASE_HEIGHT;
+
+const normalizeExportDimensions = (width: number, height: number) => {
+  const normalizedWidth = Math.max(2, Math.round(width));
+  const normalizedHeight = Math.max(2, Math.round(height));
+
+  // H.264 encoders commonly expect even dimensions.
+  return {
+    width:
+      normalizedWidth % 2 === 0 ? normalizedWidth : normalizedWidth + 1,
+    height:
+      normalizedHeight % 2 === 0 ? normalizedHeight : normalizedHeight + 1,
+  };
+};
+
 // Helper function to load an image
 const loadImage = (url: string): Promise<HTMLImageElement> => {
   return new Promise((resolve, reject) => {
@@ -125,13 +142,15 @@ export const isWebCodecsSupported = () => {
 // Debug function to log quality settings
 export const logQualitySettings = (exportSettings: ExportSettings) => {
   const qualityConfig = getH264QualityConfig(exportSettings.quality);
-  const adjustedBitrate = Math.round(
-    qualityConfig.videoBitrate * exportSettings.scale,
-  );
+  const pixelRatio =
+    (exportSettings.width * exportSettings.height) / BASE_PIXELS;
+  const adjustedBitrate = Math.round(qualityConfig.videoBitrate * pixelRatio);
 
   console.log("Quality Settings:", {
     quality: exportSettings.quality,
-    scale: exportSettings.scale,
+    width: exportSettings.width,
+    height: exportSettings.height,
+    pixelRatio,
     baseBitrate: qualityConfig.videoBitrate,
     adjustedBitrate: adjustedBitrate,
     codec: getSupportedCodec(),
@@ -165,10 +184,10 @@ const exportWithMediaRecorder = async ({
   exportSettings: ExportSettings;
   onProgress?: (progress: number) => void;
 }): Promise<ExportResult> => {
-  const baseWidth = 1920;
-  const baseHeight = 1080;
-  const width = Math.round(baseWidth * exportSettings.scale);
-  const height = Math.round(baseHeight * exportSettings.scale);
+  const { width, height } = normalizeExportDimensions(
+    exportSettings.width,
+    exportSettings.height,
+  );
 
   const qualityConfig = getH264QualityConfig(exportSettings.quality);
   const formatConfig = getFormatConfig();
@@ -204,9 +223,8 @@ const exportWithMediaRecorder = async ({
   const stream = canvas.captureStream(fps);
 
   // Calculate adjusted bitrate based on scale and quality
-  const adjustedBitrate = Math.round(
-    qualityConfig.videoBitrate * exportSettings.scale,
-  );
+  const pixelRatio = (width * height) / BASE_PIXELS;
+  const adjustedBitrate = Math.round(qualityConfig.videoBitrate * pixelRatio);
 
   const mediaRecorder = new MediaRecorder(stream, {
     mimeType: formatConfig.mimeType,
@@ -238,7 +256,7 @@ const exportWithMediaRecorder = async ({
   const totalFrames = Math.ceil(expectedDuration * fps); // Total frames needed
 
   let currentFrame = 0;
-  let startTime = Date.now();
+  const startTime = Date.now();
 
   // Animation function
   const renderFrame = () => {
@@ -313,7 +331,12 @@ export const exportMedia = async ({
   images,
   fps,
   imageDuration = 1.0,
-  exportSettings = { quality: "full", scale: 1.0, format: "h264" },
+  exportSettings = {
+    quality: "full",
+    width: BASE_WIDTH,
+    height: BASE_HEIGHT,
+    format: "h264",
+  },
   onProgress,
 }: ExportOptions): Promise<ExportResult> => {
   if (images.length === 0) {
@@ -345,7 +368,8 @@ export const exportToH264 = async (
     ...options,
     exportSettings: {
       quality: options.exportSettings?.quality || "medium",
-      scale: options.exportSettings?.scale || 1.0,
+      width: options.exportSettings?.width || BASE_WIDTH,
+      height: options.exportSettings?.height || BASE_HEIGHT,
       format: "h264" as const,
     },
   });

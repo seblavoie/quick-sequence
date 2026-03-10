@@ -12,7 +12,8 @@ export type FormatPreset = "h264";
 
 export interface ExportSettings {
   quality: QualityPreset;
-  scale: number; // Scale percentage (0.25 = 25%, 1.0 = 100%)
+  width: number;
+  height: number;
   format: FormatPreset;
 }
 
@@ -58,12 +59,39 @@ const generateId = () => {
   return `img_${Date.now()}_${++idCounter}`;
 };
 
+const DEFAULT_EXPORT_WIDTH = 1920;
+const DEFAULT_EXPORT_HEIGHT = 1080;
+
+const getImageDimensions = async (
+  file: File,
+): Promise<{ width: number; height: number } | null> => {
+  const url = URL.createObjectURL(file);
+
+  try {
+    const dimensions = await new Promise<{ width: number; height: number }>(
+      (resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve({ width: img.width, height: img.height });
+        img.onerror = reject;
+        img.src = url;
+      },
+    );
+    return dimensions;
+  } catch (error) {
+    console.warn("Could not infer image dimensions from first upload", error);
+    return null;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+};
+
 export const useImageStore = create<ImageStore>((set, get) => ({
   images: [],
   imageDuration: 1.0, // Default: 1 second per image
   exportSettings: {
     quality: "full",
-    scale: 1.0, // 100% scale
+    width: DEFAULT_EXPORT_WIDTH,
+    height: DEFAULT_EXPORT_HEIGHT,
     format: "h264",
   },
   isExporting: false,
@@ -71,6 +99,7 @@ export const useImageStore = create<ImageStore>((set, get) => ({
   exportSuccess: null,
 
   addImages: (files: File[]) => {
+    const shouldInferDimensions = get().images.length === 0 && files.length > 0;
     const newImages: ImageItem[] = files.map((file) => ({
       id: generateId(),
       file,
@@ -81,6 +110,21 @@ export const useImageStore = create<ImageStore>((set, get) => ({
     set((state) => ({
       images: [...state.images, ...newImages],
     }));
+
+    if (shouldInferDimensions) {
+      const firstFile = files[0];
+      void getImageDimensions(firstFile).then((dimensions) => {
+        if (!dimensions) return;
+
+        set((state) => ({
+          exportSettings: {
+            ...state.exportSettings,
+            width: dimensions.width,
+            height: dimensions.height,
+          },
+        }));
+      });
+    }
   },
 
   removeImage: (id: string) => {

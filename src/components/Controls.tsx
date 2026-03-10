@@ -1,5 +1,5 @@
 import { Download, Loader2, Settings, X } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   exportMedia,
   getCodecInfo,
@@ -11,6 +11,20 @@ import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Progress } from "./ui/progress";
 import { Slider } from "./ui/slider";
+
+const MIN_DIMENSION = 2;
+const MAX_DIMENSION = 7680;
+
+const normalizeDimension = (value: number) => {
+  if (!Number.isFinite(value)) return MIN_DIMENSION;
+  return Math.min(MAX_DIMENSION, Math.max(MIN_DIMENSION, Math.round(value)));
+};
+
+const getAspectRatioLabel = (width: number, height: number) => {
+  const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
+  const divisor = gcd(width, height);
+  return `${Math.round(width / divisor)}:${Math.round(height / divisor)}`;
+};
 
 export const Controls: React.FC = () => {
   const {
@@ -31,6 +45,13 @@ export const Controls: React.FC = () => {
 
   const [isEditingDuration, setIsEditingDuration] = useState(false);
   const [tempDuration, setTempDuration] = useState(imageDuration.toString());
+  const [tempWidth, setTempWidth] = useState(exportSettings.width.toString());
+  const [tempHeight, setTempHeight] = useState(exportSettings.height.toString());
+
+  useEffect(() => {
+    setTempWidth(exportSettings.width.toString());
+    setTempHeight(exportSettings.height.toString());
+  }, [exportSettings.width, exportSettings.height]);
 
   const fps = getFps();
   const codecInfo = getCodecInfo();
@@ -58,6 +79,38 @@ export const Controls: React.FC = () => {
       setTempDuration(imageDuration.toString());
       setIsEditingDuration(false);
     }
+  };
+
+  const handleWidthSave = () => {
+    const value = parseInt(tempWidth, 10);
+    if (Number.isNaN(value)) {
+      setTempWidth(exportSettings.width.toString());
+      return;
+    }
+
+    const width = normalizeDimension(value);
+    setExportSettings({ width });
+    setTempWidth(width.toString());
+  };
+
+  const handleHeightSave = () => {
+    const value = parseInt(tempHeight, 10);
+    if (Number.isNaN(value)) {
+      setTempHeight(exportSettings.height.toString());
+      return;
+    }
+
+    const height = normalizeDimension(value);
+    setExportSettings({ height });
+    setTempHeight(height.toString());
+  };
+
+  const applyAspectRatio = (ratioWidth: number, ratioHeight: number) => {
+    const nextHeight = normalizeDimension(
+      (exportSettings.width * ratioHeight) / ratioWidth,
+    );
+    setExportSettings({ height: nextHeight });
+    setTempHeight(nextHeight.toString());
   };
 
   const handleExport = async () => {
@@ -247,30 +300,66 @@ export const Controls: React.FC = () => {
             </p>
           </div>
 
-          {/* Scale Control */}
+          {/* Output Size */}
           <div>
             <div className="mb-2">
-              <label className="text-sm font-medium text-gray-900">Scale</label>
+              <label className="text-sm font-medium text-gray-900">
+                Output Size
+              </label>
             </div>
-            <div className="grid grid-cols-4 gap-2">
-              {[0.25, 0.5, 0.75, 1.0].map((scale) => (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1 block text-xs text-gray-600">Width</label>
+                <input
+                  type="number"
+                  min={MIN_DIMENSION}
+                  max={MAX_DIMENSION}
+                  step={1}
+                  value={tempWidth}
+                  onChange={(e) => setTempWidth(e.target.value)}
+                  onBlur={handleWidthSave}
+                  onKeyDown={(e) => e.key === "Enter" && handleWidthSave()}
+                  className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-gray-600">
+                  Height
+                </label>
+                <input
+                  type="number"
+                  min={MIN_DIMENSION}
+                  max={MAX_DIMENSION}
+                  step={1}
+                  value={tempHeight}
+                  onChange={(e) => setTempHeight(e.target.value)}
+                  onBlur={handleHeightSave}
+                  onKeyDown={(e) => e.key === "Enter" && handleHeightSave()}
+                  className="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+            <div className="mt-3 grid grid-cols-4 gap-2">
+              {[
+                { label: "1:1", w: 1, h: 1 },
+                { label: "4:3", w: 4, h: 3 },
+                { label: "16:9", w: 16, h: 9 },
+                { label: "9:16", w: 9, h: 16 },
+              ].map((ratio) => (
                 <Button
-                  key={scale}
-                  variant={
-                    exportSettings.scale === scale ? "default" : "outline"
-                  }
+                  key={ratio.label}
+                  variant="outline"
                   size="sm"
-                  onClick={() => setExportSettings({ scale })}
-                  className={
-                    exportSettings.scale === scale
-                      ? "bg-blue-600 hover:bg-blue-700"
-                      : "border-gray-300 text-gray-700 hover:bg-gray-50"
-                  }
+                  onClick={() => applyAspectRatio(ratio.w, ratio.h)}
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50"
                 >
-                  {Math.round(scale * 100)}%
+                  {ratio.label}
                 </Button>
               ))}
             </div>
+            <p className="mt-2 text-xs text-gray-500">
+              Auto-set from your first uploaded image when possible.
+            </p>
           </div>
 
           {/* Export Status and Button */}
@@ -306,14 +395,13 @@ export const Controls: React.FC = () => {
                 variant="outline"
                 className="border-orange-200 bg-orange-50 text-orange-700"
               >
-                {Math.round(exportSettings.scale * 100)}%
+                {getAspectRatioLabel(exportSettings.width, exportSettings.height)}
               </Badge>
               <Badge
                 variant="outline"
                 className="border-gray-200 bg-gray-50 text-gray-700"
               >
-                {Math.round(1920 * exportSettings.scale)}×
-                {Math.round(1080 * exportSettings.scale)}
+                {exportSettings.width}×{exportSettings.height}
               </Badge>
             </div>
 

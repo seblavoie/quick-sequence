@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Progress } from "./ui/progress";
 
 export const VideoPreview: React.FC = () => {
-  const { images, imageDuration, getFps } = useImageStore();
+  const { images, imageDuration, exportSettings, getFps } = useImageStore();
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [progress, setProgress] = useState(0);
@@ -84,7 +84,12 @@ export const VideoPreview: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex aspect-video items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50">
+          <div
+            className="flex items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50"
+            style={{
+              aspectRatio: `${exportSettings.width} / ${exportSettings.height}`,
+            }}
+          >
             <div className="text-center">
               <Monitor className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="mt-2 text-sm font-semibold text-gray-900">
@@ -135,7 +140,12 @@ export const VideoPreview: React.FC = () => {
       <CardContent className="space-y-4">
         {/* Video Player */}
         <div className="relative">
-          <div className="aspect-video overflow-hidden rounded-lg bg-black">
+          <div
+            className="overflow-hidden rounded-lg bg-black"
+            style={{
+              aspectRatio: `${exportSettings.width} / ${exportSettings.height}`,
+            }}
+          >
             {currentImage && (
               <img
                 src={currentImage.url}

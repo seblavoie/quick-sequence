@@ -39,7 +39,7 @@ export const RemotionRoot: React.FC = () => {
               name: string;
             }>) || [];
           const framesPerImage = (props.framesPerImage as number) || 30;
-          const durationInFrames = images.length * framesPerImage;
+          const durationInFrames = Math.max(1, images.length * framesPerImage);
 
           return {
             durationInFrames,
