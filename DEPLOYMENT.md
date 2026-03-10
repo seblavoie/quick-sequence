@@ -5,7 +5,7 @@
 ### 1. Cloudflare Pages Settings
 
 - **Framework preset**: None (or Vite if available)
-- **Build command**: `pnpm run build:web`
+- **Build command**: `pnpm run build`
 - **Build output directory**: `dist`
 - **Node.js version**: `18` or `20`
 
@@ -34,11 +34,8 @@ The project is configured for static deployment with:
 
 ## Limitations
 
-❌ **Server-side Remotion features not available:**
-
-- Command-line rendering (`pnpm run render`)
-- Remotion Studio (`pnpm run dev`)
-- Server-side video processing
+- Large exports are processed client-side, so performance depends on the user's device.
+- Browser codec support can vary across platforms.
 
 ## Performance Considerations
 
@@ -51,7 +48,7 @@ The project is configured for static deployment with:
 
 ```bash
 # Local build test
-pnpm run build:web
+pnpm run build
 
 # Check output
 ls -la dist/
@@ -72,8 +69,6 @@ The `_headers` file includes proper CORS configuration for:
 
 ## Alternative Deployment Options
 
-If you need server-side rendering capabilities:
-
-- **Vercel**: Supports Remotion server-side rendering
-- **Netlify**: Similar to Cloudflare Pages
+- **Vercel**: Static hosting for the Vite build
+- **Netlify**: Similar static deployment
 - **Traditional hosting**: Any static host (GitHub Pages, etc.)

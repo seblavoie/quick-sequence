@@ -222,7 +222,7 @@ const exportWithMediaRecorder = async ({
   // Set up MediaRecorder with detected codec and high quality settings
   const stream = canvas.captureStream(fps);
 
-  // Calculate adjusted bitrate based on scale and quality
+  // Calculate adjusted bitrate based on resolution and quality
   const pixelRatio = (width * height) / BASE_PIXELS;
   const adjustedBitrate = Math.round(qualityConfig.videoBitrate * pixelRatio);
 
@@ -246,48 +246,39 @@ const exportWithMediaRecorder = async ({
     };
   });
 
+  // Calculate timing based on image duration and fps
+  const frameInterval = 1000 / fps; // milliseconds per frame
+  const framesPerImage = Math.max(1, Math.round(imageDuration * fps));
+  const totalFrames = loadedImages.length * framesPerImage;
+  const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  const drawFrame = (frameNumber: number) => {
+    const imageIndex = Math.min(
+      loadedImages.length - 1,
+      Math.floor(frameNumber / framesPerImage),
+    );
+    const img = loadedImages[imageIndex];
+    drawImageCentered(ctx, img, width, height);
+  };
+
+  // Draw first frame before recording starts so the stream has content immediately.
+  drawFrame(0);
+
   // Start recording
   mediaRecorder.start();
   onProgress?.(30);
 
-  // Calculate timing based on image duration and fps
-  const frameInterval = 1000 / fps; // milliseconds per frame
-  const expectedDuration = images.length * imageDuration; // Total duration in seconds
-  const totalFrames = Math.ceil(expectedDuration * fps); // Total frames needed
+  // Render deterministically: each image gets the same number of frames.
+  for (let frame = 1; frame < totalFrames; frame++) {
+    await wait(frameInterval);
+    drawFrame(frame);
 
-  let currentFrame = 0;
-  const startTime = Date.now();
+    const progress = 30 + (frame / totalFrames) * 60; // 30% to 90%
+    onProgress?.(progress);
+  }
 
-  // Animation function
-  const renderFrame = () => {
-    return new Promise<void>((resolve) => {
-      const elapsedTime = (Date.now() - startTime) / 1000; // Time elapsed in seconds
-      const imageIndex = Math.floor(elapsedTime / imageDuration);
-
-      if (imageIndex < loadedImages.length) {
-        const img = loadedImages[imageIndex];
-        drawImageCentered(ctx, img, width, height);
-      }
-
-      currentFrame++;
-
-      // Update progress
-      const progress = 30 + (currentFrame / totalFrames) * 60; // 30% to 90%
-      onProgress?.(progress);
-
-      // Continue or finish
-      if (elapsedTime < expectedDuration) {
-        setTimeout(() => {
-          renderFrame().then(resolve);
-        }, frameInterval);
-      } else {
-        resolve();
-      }
-    });
-  };
-
-  // Start rendering frames
-  await renderFrame();
+  // Allow the final drawn frame to be captured.
+  await wait(frameInterval);
 
   // Stop recording
   mediaRecorder.stop();

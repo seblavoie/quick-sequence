@@ -18,6 +18,5 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true
   },
-  "include": ["src"],
-  "exclude": ["remotion.config.ts"]
+  "include": ["src"]
 }
